@@ -18,7 +18,9 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     const calculateTotal = () => {
-        return calculateSubtotal() + calculateGST().total
+        const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
+        const deliveryCharge = parseFloat(invoiceData.deliveryCharge.replace(/[^0-9.]/g, '')) || 0;
+        return calculateSubtotal() + calculateGST().total + pfCharge + deliveryCharge;
     }
 
     const downloadPDF = async () => {
@@ -248,6 +250,14 @@ export default function InvoicePreview({ invoiceData }) {
                             <div className="flex justify-between text-gray-600">
                                 <span>SGST ({invoiceData.sgstRate}%)</span>
                                 <span className="font-medium text-gray-900">{formatCurrency(gst.sgst)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600">
+                                <span>P&F Charge</span>
+                                <span className="font-medium text-gray-900">{formatCurrency(invoiceData.pfCharge || 0)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600">
+                                <span>Delivery Charge</span>
+                                <span className="font-medium text-gray-900">{formatCurrency(invoiceData.deliveryCharge || 0)}</span>
                             </div>
                             <div className="flex justify-between border-t-2 border-gray-800 pt-3 text-lg font-bold text-gray-900">
                                 <span>Total</span>

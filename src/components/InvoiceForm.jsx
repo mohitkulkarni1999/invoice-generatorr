@@ -49,7 +49,9 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
     }
 
     const calculateTotal = () => {
-        return calculateSubtotal() + calculateCGST() + calculateSGST()
+        const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
+        const deliveryCharge = parseFloat(invoiceData.deliveryCharge.replace(/[^0-9.]/g, '')) || 0;
+        return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge + deliveryCharge;
     }
 
     const formatCurrency = (amount) => {
@@ -300,6 +302,28 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                                 step="0.01"
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">P&F Charge</label>
+                            <input
+                                type="number"
+                                value={invoiceData.pfCharge}
+                                onChange={(e) => handleInputChange('pfCharge', e.target.value)}
+                                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter P&F Charge"
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Charge</label>
+                            <input
+                                type="text"
+                                value={invoiceData.deliveryCharge}
+                                onChange={(e) => handleInputChange('deliveryCharge', e.target.value)}
+                                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter Delivery Charge"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -318,6 +342,14 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                         <div className="flex justify-between items-center pb-2 border-b border-blue-200">
                             <span className="text-sm sm:text-base text-gray-700">SGST ({invoiceData.sgstRate}%):</span>
                             <span className="text-base sm:text-lg font-semibold text-gray-800">{formatCurrency(calculateSGST())}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-blue-200">
+                            <span className="text-sm sm:text-base text-gray-700">P&F Charge:</span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-800">{formatCurrency(invoiceData.pfCharge || 0)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-blue-200">
+                            <span className="text-sm sm:text-base text-gray-700">Delivery Charge:</span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-800">{formatCurrency(invoiceData.deliveryCharge || 0)}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 bg-white rounded-lg px-4 py-3 shadow-sm">
                             <span className="text-base sm:text-lg font-bold text-gray-800">Total Amount:</span>
