@@ -50,8 +50,40 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
 
     const calculateTotal = () => {
         const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
-        const deliveryCharge = parseFloat(invoiceData.deliveryCharge.replace(/[^0-9.]/g, '')) || 0;
+        
+        if (!invoiceData.deliveryCharge) {
+            return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge;
+        }
+
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString();
+        // Extract only numbers from the string
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
+        const deliveryChargeNum = parseFloat(numericPart);
+        
+        // Only add delivery charge if it's a valid number
+        const deliveryCharge = (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0;
+        
         return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge + deliveryCharge;
+    }
+
+    const renderDeliveryCharge = () => {
+        if (!invoiceData.deliveryCharge) {
+            return 'No Delivery Charge';
+        }
+
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString().trim();
+
+        // Try to extract numbers from the string
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
+        const deliveryChargeNum = parseFloat(numericPart);
+
+        // If there are any digits and it's a valid number, format it as currency
+        if (numericPart && !isNaN(deliveryChargeNum)) {
+            return formatCurrency(deliveryChargeNum);
+        }
+
+        // Otherwise, it's pure text - return it as is
+        return deliveryChargeRaw;
     }
 
     const formatCurrency = (amount) => {
@@ -349,7 +381,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                         </div>
                         <div className="flex justify-between items-center pb-2 border-b border-blue-200">
                             <span className="text-sm sm:text-base text-gray-700">Delivery Charge:</span>
-                            <span className="text-base sm:text-lg font-semibold text-gray-800">{formatCurrency(invoiceData.deliveryCharge || 0)}</span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-800">{renderDeliveryCharge()}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 bg-white rounded-lg px-4 py-3 shadow-sm">
                             <span className="text-base sm:text-lg font-bold text-gray-800">Total Amount:</span>

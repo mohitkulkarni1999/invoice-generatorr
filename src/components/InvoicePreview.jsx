@@ -19,18 +19,40 @@ export default function InvoicePreview({ invoiceData }) {
 
     const calculateTotal = () => {
         const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
-        const deliveryChargeRaw = invoiceData.deliveryCharge;
-        const deliveryCharge = parseFloat(deliveryChargeRaw.replace(/[^0-9.]/g, '')) || 0;
+        
+        if (!invoiceData.deliveryCharge) {
+            return calculateSubtotal() + calculateGST().total + pfCharge;
+        }
+
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString();
+        // Extract only numbers from the string
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
+        const deliveryChargeNum = parseFloat(numericPart);
+        
+        // Only add delivery charge if it's a valid number
+        const deliveryCharge = (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0;
+        
         return calculateSubtotal() + calculateGST().total + pfCharge + deliveryCharge;
     }
 
     const renderDeliveryCharge = () => {
-        const deliveryChargeRaw = invoiceData.deliveryCharge;
-        const deliveryCharge = parseFloat(deliveryChargeRaw.replace(/[^0-9.]/g, ''));
-        if (isNaN(deliveryCharge)) {
-            return deliveryChargeRaw.trim() ? deliveryChargeRaw : 'No Delivery Charge';
+        if (!invoiceData.deliveryCharge) {
+            return 'No Delivery Charge';
         }
-        return formatCurrency(deliveryCharge);
+
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString().trim();
+
+        // Try to extract numbers from the string
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
+        const deliveryChargeNum = parseFloat(numericPart);
+
+        // If there are any digits and it's a valid number, format it as currency
+        if (numericPart && !isNaN(deliveryChargeNum)) {
+            return formatCurrency(deliveryChargeNum);
+        }
+
+        // Otherwise, it's pure text - return it as is
+        return deliveryChargeRaw;
     }
 
     const downloadPDF = async () => {
