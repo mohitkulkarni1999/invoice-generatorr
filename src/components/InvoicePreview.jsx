@@ -19,8 +19,18 @@ export default function InvoicePreview({ invoiceData }) {
 
     const calculateTotal = () => {
         const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
-        const deliveryCharge = parseFloat(invoiceData.deliveryCharge.replace(/[^0-9.]/g, '')) || 0;
+        const deliveryChargeRaw = invoiceData.deliveryCharge;
+        const deliveryCharge = parseFloat(deliveryChargeRaw.replace(/[^0-9.]/g, '')) || 0;
         return calculateSubtotal() + calculateGST().total + pfCharge + deliveryCharge;
+    }
+
+    const renderDeliveryCharge = () => {
+        const deliveryChargeRaw = invoiceData.deliveryCharge;
+        const deliveryCharge = parseFloat(deliveryChargeRaw.replace(/[^0-9.]/g, ''));
+        if (isNaN(deliveryCharge)) {
+            return deliveryChargeRaw.trim() ? deliveryChargeRaw : 'No Delivery Charge';
+        }
+        return formatCurrency(deliveryCharge);
     }
 
     const downloadPDF = async () => {
@@ -257,7 +267,7 @@ export default function InvoicePreview({ invoiceData }) {
                             </div>
                             <div className="flex justify-between text-gray-600">
                                 <span>Delivery Charge</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(invoiceData.deliveryCharge || 0)}</span>
+                                <span className="font-medium text-gray-900">{renderDeliveryCharge()}</span>
                             </div>
                             <div className="flex justify-between border-t-2 border-gray-800 pt-3 text-lg font-bold text-gray-900">
                                 <span>Total</span>
