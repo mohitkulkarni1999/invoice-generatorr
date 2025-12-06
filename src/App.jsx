@@ -20,6 +20,7 @@ function App() {
     ],
     cgstRate: 9,
     sgstRate: 9,
+    pfCharge: '',
     deliveryCharge: '',
     notes: '',
     terms: 'Payment is due within 30 days. Late payment subject to fees as per our terms and conditions.'

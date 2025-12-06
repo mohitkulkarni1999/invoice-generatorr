@@ -14,45 +14,37 @@ export default function InvoicePreview({ invoiceData }) {
         const subtotal = calculateSubtotal()
         const cgst = subtotal * (parseFloat(invoiceData.cgstRate) || 0) / 100
         const sgst = subtotal * (parseFloat(invoiceData.sgstRate) || 0) / 100
-        return { cgst, sgst, total: cgst + sgst }
+        return { cgst, sgst }
+    }
+
+    const getPFCharge = () => {
+        const pfCharge = parseFloat(invoiceData.pfCharge) || 0
+        return pfCharge
+    }
+
+    const getDeliveryCharge = () => {
+        if (!invoiceData.deliveryCharge) return 0
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString()
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '')
+        const deliveryChargeNum = parseFloat(numericPart)
+        return (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0
     }
 
     const calculateTotal = () => {
-        const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
-        
-        if (!invoiceData.deliveryCharge) {
-            return calculateSubtotal() + calculateGST().total + pfCharge;
-        }
-
-        const deliveryChargeRaw = invoiceData.deliveryCharge.toString();
-        // Extract only numbers from the string
-        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
-        const deliveryChargeNum = parseFloat(numericPart);
-        
-        // Only add delivery charge if it's a valid number
-        const deliveryCharge = (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0;
-        
-        return calculateSubtotal() + calculateGST().total + pfCharge + deliveryCharge;
+        const gst = calculateGST()
+        return calculateSubtotal() + gst.cgst + gst.sgst + getPFCharge() + getDeliveryCharge()
     }
 
     const renderDeliveryCharge = () => {
-        if (!invoiceData.deliveryCharge) {
-            return 'No Delivery Charge';
-        }
+        if (!invoiceData.deliveryCharge) return formatCurrency(0)
+        const deliveryChargeRaw = invoiceData.deliveryCharge.toString().trim()
+        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '')
+        const deliveryChargeNum = parseFloat(numericPart)
 
-        const deliveryChargeRaw = invoiceData.deliveryCharge.toString().trim();
-
-        // Try to extract numbers from the string
-        const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
-        const deliveryChargeNum = parseFloat(numericPart);
-
-        // If there are any digits and it's a valid number, format it as currency
         if (numericPart && !isNaN(deliveryChargeNum)) {
-            return formatCurrency(deliveryChargeNum);
+            return formatCurrency(deliveryChargeNum)
         }
-
-        // Otherwise, it's pure text - return it as is
-        return deliveryChargeRaw;
+        return deliveryChargeRaw
     }
 
     const downloadPDF = async () => {
@@ -65,101 +57,34 @@ export default function InvoicePreview({ invoiceData }) {
                 return
             }
 
-            // Create a clone of the element for PDF generation
-            const clone = element.cloneNode(true)
-            clone.style.position = 'absolute'
-            clone.style.left = '-9999px'
-            clone.style.top = '0'
-            clone.style.width = '800px' // Fixed width for consistent PDF output
-            document.body.appendChild(clone)
-
-            // Color mapping for Tailwind v4 oklch colors to Hex (Updated for Basic Theme)
-            const colorMap = {
-                // Text
-                'text-gray-900': '#111827',
-                'text-gray-800': '#1f2937',
-                'text-gray-700': '#374151',
-                'text-gray-600': '#4b5563',
-                'text-gray-500': '#6b7280',
-                'text-white': '#ffffff',
-
-                // Backgrounds
-                'bg-white': '#ffffff',
-                'bg-gray-50': '#f9fafb',
-                'bg-gray-100': '#f3f4f6',
-
-                // Borders
-                'border-gray-200': '#e5e7eb',
-                'border-gray-300': '#d1d5db',
-                'border-gray-800': '#1f2937',
-                'border-black': '#000000',
-            }
-
-            // Helper to process elements
-            const processElement = (el) => {
-                const classList = Array.from(el.classList)
-
-                // 1. Handle Text Colors
-                const textClass = classList.find(c => c.startsWith('text-') && colorMap[c])
-                if (textClass) {
-                    el.style.color = colorMap[textClass]
-                    el.classList.remove(textClass)
-                } else if (classList.some(c => c.startsWith('text-'))) {
-                    el.style.color = '#000000' // Fallback to black
-                }
-
-                // 2. Handle Backgrounds
-                const bgClass = classList.find(c => c.startsWith('bg-') && colorMap[c])
-                if (bgClass) {
-                    el.style.backgroundColor = colorMap[bgClass]
-                    el.classList.remove(bgClass)
-                }
-
-                // 3. Handle Borders
-                const borderClass = classList.find(c => c.startsWith('border-') && colorMap[c])
-                if (borderClass) {
-                    el.style.borderColor = colorMap[borderClass]
-                    el.classList.remove(borderClass)
-                } else if (classList.some(c => c.startsWith('border'))) {
-                    el.style.borderColor = '#e5e7eb' // Default border
-                }
-
-                // Recursively process children
-                Array.from(el.children).forEach(processElement)
-            }
-
-            // Process the clone
-            processElement(clone)
-
-            // Wait a bit for rendering
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            const canvas = await html2canvas(clone, {
-                scale: 1.5, // Optimized scale
+            const canvas = await html2canvas(element, {
+                scale: 2.0, // Higher scale for better quality
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                windowWidth: 800,
-                windowHeight: clone.scrollHeight
+                onclone: (clonedDoc) => {
+                    // Remove all Tailwind classes from cloned document
+                    const allElements = clonedDoc.querySelectorAll('*')
+                    allElements.forEach(el => {
+                        el.removeAttribute('class')
+                    })
+                }
             })
 
-            // Remove the clone
-            document.body.removeChild(clone)
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.8) // Optimized JPEG
+            // Use JPEG with high quality compression
+            const imgData = canvas.toDataURL('image/jpeg', 0.92) // 0.92 quality for high quality with compression
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
                 format: 'a4'
             })
 
-            const imgWidth = 210 // A4 width in mm
+            const imgWidth = 210
             const imgHeight = (canvas.height * imgWidth) / canvas.width
 
             pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
             pdf.save(`Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`)
 
-            console.log('PDF generated successfully!')
         } catch (error) {
             console.error('Error generating PDF:', error)
             alert('Failed to generate PDF. Please try again.')
@@ -190,134 +115,189 @@ export default function InvoicePreview({ invoiceData }) {
     const subtotal = calculateSubtotal()
     const total = calculateTotal()
 
+    // Inline styles for PDF compatibility
+    const styles = {
+        container: { minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '2rem 1rem' },
+        maxWidth: { maxWidth: '56rem', margin: '0 auto' },
+        downloadBtn: { marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' },
+        button: { backgroundColor: '#2563eb', color: '#ffffff', fontWeight: '600', padding: '0.75rem 1.5rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
+        invoice: { backgroundColor: '#ffffff', padding: '2.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', width: '210mm', minHeight: '297mm' },
+        headerBorder: { borderBottom: '2px solid #000000', paddingBottom: '1rem', marginBottom: '1.5rem' },
+        flexBetween: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+        title: { fontSize: '1.875rem', fontWeight: 'bold', color: '#000000', marginBottom: '0.25rem' },
+        textSm: { fontSize: '0.875rem', color: '#4b5563' },
+        textBlack: { color: '#000000', fontWeight: '600' },
+        grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '1.5rem' },
+        box: { border: '1px solid #d1d5db', padding: '1rem' },
+        labelSmall: { fontSize: '0.75rem', fontWeight: 'bold', color: '#4b5563', textTransform: 'uppercase', marginBottom: '0.5rem' },
+        companyName: { fontWeight: 'bold', color: '#000000', fontSize: '1rem', marginBottom: '0.25rem' },
+        address: { fontSize: '0.875rem', color: '#374151', lineHeight: '1.625', whiteSpace: 'pre-line' },
+        table: { width: '100%', marginBottom: '1.5rem', borderCollapse: 'collapse', border: '1px solid #d1d5db' },
+        th: { border: '1px solid #d1d5db', padding: '0.5rem 0.75rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#000000', textTransform: 'uppercase', backgroundColor: '#f3f4f6' },
+        td: { border: '1px solid #d1d5db', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: '#374151' },
+        tdBold: { border: '1px solid #d1d5db', padding: '0.5rem 0.75rem', fontSize: '0.875rem', fontWeight: '600', color: '#000000' },
+        totalsContainer: { display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' },
+        totalsTable: { width: '20rem', borderCollapse: 'collapse', border: '1px solid #d1d5db' },
+        totalRow: { backgroundColor: '#f3f4f6' },
+        totalTd: { border: '1px solid #d1d5db', padding: '0.5rem 0.75rem', fontSize: '1rem', fontWeight: 'bold', color: '#000000' },
+        footer: { borderTop: '1px solid #d1d5db', paddingTop: '1.5rem', marginTop: '2rem' },
+        footerFlex: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
+        signatureLine: { borderTop: '1px solid #9ca3af', width: '12rem', marginTop: '2rem' }
+    }
+
     return (
-        <div className="min-h-screen bg-gray-100 py-8 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div style={styles.container}>
+            <div style={styles.maxWidth}>
                 {/* Download Button */}
-                <div className="mb-6 flex justify-end">
+                <div style={styles.downloadBtn}>
                     <button
                         onClick={downloadPDF}
                         disabled={isGenerating}
-                        className="bg-gray-800 hover:bg-gray-900 text-white font-semibold px-6 py-2 rounded shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={styles.button}
                     >
-                        {isGenerating ? 'Generating...' : 'Download PDF'}
+                        {isGenerating ? 'Generating PDF...' : 'Download PDF'}
                     </button>
                 </div>
 
-                {/* Invoice - Basic Paper Look */}
-                <div ref={invoiceRef} className="bg-white border border-gray-300 p-8 sm:p-12 shadow-sm mx-auto min-h-[297mm]">
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start border-b-2 border-gray-800 pb-8 mb-8">
-                        <div>
-                            <h1 className="text-4xl font-bold text-gray-900 tracking-wide uppercase">INVOICE</h1>
-                            <p className="text-gray-500 mt-1 font-medium">#{invoiceData.invoiceNumber}</p>
-                        </div>
-                        <div className="mt-4 sm:mt-0 sm:text-right">
-                            <div className="text-gray-600">Date: <span className="text-gray-900 font-medium">{formatDate(invoiceData.invoiceDate)}</span></div>
-                            {invoiceData.dueDate && (
-                                <div className="text-gray-600 mt-1">Due: <span className="text-gray-900 font-medium">{formatDate(invoiceData.dueDate)}</span></div>
-                            )}
+                {/* Invoice */}
+                <div ref={invoiceRef} style={styles.invoice}>
+
+                    {/* Header Section */}
+                    <div style={styles.headerBorder}>
+                        <div style={styles.flexBetween}>
+                            <div>
+                                <h1 style={styles.title}>TAX INVOICE</h1>
+                                <p style={styles.textSm}>Invoice No: <span style={styles.textBlack}>{invoiceData.invoiceNumber}</span></p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={styles.textSm}>Date: <span style={styles.textBlack}>{formatDate(invoiceData.invoiceDate)}</span></p>
+                                {invoiceData.dueDate && (
+                                    <p style={styles.textSm}>Due Date: <span style={styles.textBlack}>{formatDate(invoiceData.dueDate)}</span></p>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Addresses */}
-                    <div className="flex flex-col sm:flex-row justify-between gap-8 mb-12">
-                        <div className="w-full sm:w-1/2">
-                            <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-4">From</h3>
-                            <div className="text-gray-900 font-bold text-lg mb-1">{invoiceData.companyName}</div>
-                            <div className="text-gray-600 whitespace-pre-line leading-relaxed">{invoiceData.companyAddress}</div>
+                    {/* Company and Client Details */}
+                    <div style={styles.grid2}>
+                        {/* From Section */}
+                        <div style={styles.box}>
+                            <h3 style={styles.labelSmall}>From</h3>
+                            <p style={styles.companyName}>{invoiceData.companyName}</p>
+                            <p style={styles.address}>{invoiceData.companyAddress}</p>
                             {invoiceData.companyGSTIN && (
-                                <div className="text-gray-600 mt-2"><span className="font-medium text-gray-800">GSTIN:</span> {invoiceData.companyGSTIN}</div>
+                                <p style={styles.textSm}><span style={{ fontWeight: '600' }}>GSTIN:</span> {invoiceData.companyGSTIN}</p>
                             )}
                             {invoiceData.companyPhone && (
-                                <div className="text-gray-600"><span className="font-medium text-gray-800">Phone:</span> {invoiceData.companyPhone}</div>
+                                <p style={styles.textSm}><span style={{ fontWeight: '600' }}>Phone:</span> {invoiceData.companyPhone}</p>
                             )}
                             {invoiceData.companyEmail && (
-                                <div className="text-gray-600"><span className="font-medium text-gray-800">Email:</span> {invoiceData.companyEmail}</div>
+                                <p style={styles.textSm}><span style={{ fontWeight: '600' }}>Email:</span> {invoiceData.companyEmail}</p>
                             )}
                         </div>
-                        <div className="w-full sm:w-1/2 sm:text-right">
-                            <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-4">Bill To</h3>
-                            <div className="text-gray-900 font-bold text-lg mb-1">{invoiceData.clientName}</div>
-                            <div className="text-gray-600 whitespace-pre-line leading-relaxed">{invoiceData.clientAddress}</div>
+
+                        {/* Bill To Section */}
+                        <div style={styles.box}>
+                            <h3 style={styles.labelSmall}>Bill To</h3>
+                            <p style={styles.companyName}>{invoiceData.clientName}</p>
+                            <p style={styles.address}>{invoiceData.clientAddress}</p>
                             {invoiceData.clientGSTIN && (
-                                <div className="text-gray-600 mt-2"><span className="font-medium text-gray-800">GSTIN:</span> {invoiceData.clientGSTIN}</div>
+                                <p style={styles.textSm}><span style={{ fontWeight: '600' }}>GSTIN:</span> {invoiceData.clientGSTIN}</p>
                             )}
                         </div>
                     </div>
 
-                    {/* Table */}
-                    <table className="w-full mb-8">
+                    {/* Items Table */}
+                    <table style={styles.table}>
                         <thead>
-                            <tr className="border-b-2 border-gray-800">
-                                <th className="text-left py-3 font-bold text-gray-900 uppercase text-sm">Description</th>
-                                <th className="text-right py-3 font-bold text-gray-900 uppercase text-sm">Qty</th>
-                                <th className="text-right py-3 font-bold text-gray-900 uppercase text-sm">Rate</th>
-                                <th className="text-right py-3 font-bold text-gray-900 uppercase text-sm">Amount</th>
+                            <tr>
+                                <th style={{ ...styles.th, textAlign: 'left' }}>S.No</th>
+                                <th style={{ ...styles.th, textAlign: 'left' }}>Description</th>
+                                <th style={{ ...styles.th, textAlign: 'center' }}>Qty</th>
+                                <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
+                                <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
                             </tr>
                         </thead>
-                        <tbody className="text-gray-700">
+                        <tbody>
                             {invoiceData.items.map((item, index) => (
-                                <tr key={index} className="border-b border-gray-200">
-                                    <td className="py-4 align-top">{item.description}</td>
-                                    <td className="py-4 text-right align-top">{item.quantity}</td>
-                                    <td className="py-4 text-right align-top">{formatCurrency(item.rate)}</td>
-                                    <td className="py-4 text-right font-medium text-gray-900 align-top">{formatCurrency(item.amount)}</td>
+                                <tr key={index}>
+                                    <td style={styles.td}>{index + 1}</td>
+                                    <td style={styles.td}>{item.description}</td>
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>{item.quantity}</td>
+                                    <td style={{ ...styles.td, textAlign: 'right' }}>{formatCurrency(item.rate)}</td>
+                                    <td style={{ ...styles.tdBold, textAlign: 'right' }}>{formatCurrency(item.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
 
-                    {/* Totals */}
-                    <div className="flex justify-end mb-12">
-                        <div className="w-full sm:w-72 space-y-3">
-                            <div className="flex justify-between text-gray-600">
-                                <span>Subtotal</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(subtotal)}</span>
+                    {/* Totals Section */}
+                    <div style={styles.totalsContainer}>
+                        <table style={styles.totalsTable}>
+                            <tbody>
+                                <tr>
+                                    <td style={styles.tdBold}>Subtotal</td>
+                                    <td style={{ ...styles.tdBold, textAlign: 'right' }}>{formatCurrency(subtotal)}</td>
+                                </tr>
+                                <tr>
+                                    <td style={styles.tdBold}>CGST ({invoiceData.cgstRate}%)</td>
+                                    <td style={{ ...styles.tdBold, textAlign: 'right' }}>{formatCurrency(gst.cgst)}</td>
+                                </tr>
+                                <tr>
+                                    <td style={styles.tdBold}>SGST ({invoiceData.sgstRate}%)</td>
+                                    <td style={{ ...styles.tdBold, textAlign: 'right' }}>{formatCurrency(gst.sgst)}</td>
+                                </tr>
+                                {getPFCharge() > 0 && (
+                                    <tr>
+                                        <td style={styles.tdBold}>P&F Charge</td>
+                                        <td style={{ ...styles.tdBold, textAlign: 'right' }}>{formatCurrency(getPFCharge())}</td>
+                                    </tr>
+                                )}
+                                {(invoiceData.deliveryCharge && invoiceData.deliveryCharge !== '') && (
+                                    <tr>
+                                        <td style={styles.tdBold}>Delivery Charge</td>
+                                        <td style={{ ...styles.tdBold, textAlign: 'right' }}>{renderDeliveryCharge()}</td>
+                                    </tr>
+                                )}
+                                <tr style={styles.totalRow}>
+                                    <td style={styles.totalTd}>Total Amount</td>
+                                    <td style={{ ...styles.totalTd, textAlign: 'right' }}>{formatCurrency(total)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Notes and Terms */}
+                    {(invoiceData.notes || invoiceData.terms) && (
+                        <div style={{ borderTop: '1px solid #d1d5db', paddingTop: '1rem', marginBottom: '1.5rem' }}>
+                            {invoiceData.notes && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <h3 style={styles.labelSmall}>Notes</h3>
+                                    <p style={{ ...styles.textSm, whiteSpace: 'pre-line' }}>{invoiceData.notes}</p>
+                                </div>
+                            )}
+                            {invoiceData.terms && (
+                                <div>
+                                    <h3 style={styles.labelSmall}>Terms & Conditions</h3>
+                                    <p style={{ ...styles.textSm, whiteSpace: 'pre-line' }}>{invoiceData.terms}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div style={styles.footer}>
+                        <div style={styles.footerFlex}>
+                            <div style={styles.textSm}>
+                                <p style={{ fontWeight: '600' }}>Thank you for your business!</p>
                             </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>CGST ({invoiceData.cgstRate}%)</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(gst.cgst)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>SGST ({invoiceData.sgstRate}%)</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(gst.sgst)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>P&F Charge</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(invoiceData.pfCharge || 0)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span>Delivery Charge</span>
-                                <span className="font-medium text-gray-900">{renderDeliveryCharge()}</span>
-                            </div>
-                            <div className="flex justify-between border-t-2 border-gray-800 pt-3 text-lg font-bold text-gray-900">
-                                <span>Total</span>
-                                <span>{formatCurrency(total)}</span>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ fontSize: '0.75rem', color: '#4b5563', marginBottom: '2rem' }}>Authorized Signature</p>
+                                <div style={styles.signatureLine}></div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Notes and Terms */}
-                    <div className="grid grid-cols-1 gap-8 pt-8 border-t border-gray-200">
-                        {invoiceData.notes && (
-                            <div>
-                                <h3 className="text-gray-900 text-sm font-bold uppercase mb-2">Notes</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
-                            </div>
-                        )}
-                        {invoiceData.terms && (
-                            <div>
-                                <h3 className="text-gray-900 text-sm font-bold uppercase mb-2">Terms & Conditions</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-16 text-center text-sm text-gray-500">
-                        <p>Thank you for your business!</p>
-                    </div>
                 </div>
             </div>
         </div>

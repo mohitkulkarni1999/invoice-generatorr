@@ -12,4 +12,10 @@ export default {
     },
   },
   plugins: [],
+  corePlugins: {
+    // Disable oklch colors for compatibility with html2canvas
+  },
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
 }
