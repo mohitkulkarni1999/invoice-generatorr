@@ -22,7 +22,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
     const addItem = () => {
         setInvoiceData(prev => ({
             ...prev,
-            items: [...prev.items, { description: '', quantity: 1, rate: 0, amount: 0 }]
+            items: [...prev.items, { description: '', hsnCode: '', quantity: 1, rate: 0, amount: 0 }]
         }))
     }
 
@@ -112,6 +112,16 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                                 onChange={(e) => handleInputChange('companyGSTIN', e.target.value)}
                                 className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="22AAAAA0000A1Z5"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">PAN Number</label>
+                            <input
+                                type="text"
+                                value={invoiceData.companyPAN}
+                                onChange={(e) => handleInputChange('companyPAN', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="ABCDE1234F"
                             />
                         </div>
                         <div className="md:col-span-2">
@@ -206,6 +216,16 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                                 placeholder="22AAAAA0000A1Z5"
                             />
                         </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Client Phone</label>
+                            <input
+                                type="text"
+                                value={invoiceData.clientPhone}
+                                onChange={(e) => handleInputChange('clientPhone', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="+91 98765 43210"
+                            />
+                        </div>
                         <div className="md:col-span-2">
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Client Address *</label>
                             <textarea
@@ -244,6 +264,16 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                                             onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                                             className="w-full px-2 md:px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             placeholder="Item description"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">HSN Code</label>
+                                        <input
+                                            type="text"
+                                            value={item.hsnCode}
+                                            onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                                            className="w-full px-2 md:px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="HSN Code"
                                         />
                                     </div>
 
@@ -344,6 +374,63 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                                 onChange={(e) => handleInputChange('deliveryCharge', e.target.value)}
                                 className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Delivery Charge"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Payment Bank Details */}
+                <div className="border-b pb-3 md:pb-4">
+                    <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-2 md:mb-3">Payment Bank Details</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                            <input
+                                type="text"
+                                value={invoiceData.bankName}
+                                onChange={(e) => handleInputChange('bankName', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Bank Name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Account No</label>
+                            <input
+                                type="text"
+                                value={invoiceData.accountNo}
+                                onChange={(e) => handleInputChange('accountNo', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Account Number"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                            <input
+                                type="text"
+                                value={invoiceData.accountName}
+                                onChange={(e) => handleInputChange('accountName', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Account Holder Name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                            <input
+                                type="text"
+                                value={invoiceData.accountType}
+                                onChange={(e) => handleInputChange('accountType', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Current / Savings"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+                            <input
+                                type="text"
+                                value={invoiceData.ifsc}
+                                onChange={(e) => handleInputChange('ifsc', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="IFSC Code"
                             />
                         </div>
                     </div>

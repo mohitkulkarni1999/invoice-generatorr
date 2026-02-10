@@ -10,13 +10,20 @@ function App() {
     companyName: '',
     companyAddress: '',
     companyGSTIN: '',
+    companyPAN: '',
     companyPhone: '',
     companyEmail: '',
+    bankName: '',
+    accountNo: '',
+    accountName: '',
+    accountType: '',
+    ifsc: '',
     clientName: '',
+    clientPhone: '',
     clientAddress: '',
     clientGSTIN: '',
     items: [
-      { description: '', quantity: 1, rate: 0, amount: 0 }
+      { description: '', hsnCode: '', quantity: 1, rate: 0, amount: 0 }
     ],
     cgstRate: 9,
     sgstRate: 9,
