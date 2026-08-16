@@ -48,11 +48,11 @@ export default function Dashboard({ admin, onLogout }) {
           <div className="flex items-center gap-2 font-bold text-gray-800 truncate">
             <span>💰</span>
             <span className="truncate">Invoice Generator</span>
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">Admin</span>
+            <span className="hidden sm:inline-flex text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">Admin</span>
           </div>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-600 shrink-0">
-          <span className="font-medium truncate">{admin}</span>
+          <span className="font-medium truncate max-w-[6rem] sm:max-w-[12rem]">{admin}</span>
           <button onClick={onLogout} className="text-red-600 hover:text-red-700 font-medium whitespace-nowrap">Logout</button>
         </div>
       </header>
