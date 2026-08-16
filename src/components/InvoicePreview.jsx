@@ -153,16 +153,16 @@ export default function InvoicePreview({ invoiceData }) {
             const pageHeight = 297
             const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-            // Multi-page support when content is taller than a single A4 page
-            let heightLeft = imgHeight
+            // Only add extra pages when content meaningfully overflows a single A4 page.
+            // A small tolerance avoids an empty 2nd page caused by mm-to-px rounding.
+            const tolerance = 1.5
+            const pageCount = Math.max(1, Math.ceil((imgHeight - tolerance) / pageHeight))
             let position = 0
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-            heightLeft -= pageHeight
-            while (heightLeft > 0) {
+            for (let i = 1; i < pageCount; i++) {
                 position -= pageHeight
                 pdf.addPage()
                 pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-                heightLeft -= pageHeight
             }
 
             pdf.save(`Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`)
