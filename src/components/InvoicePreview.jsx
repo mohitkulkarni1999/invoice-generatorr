@@ -234,7 +234,7 @@ export default function InvoicePreview({ invoiceData }) {
     const pageWrapperStyle = isMobile
         ? { overflow: 'hidden', width: '100%', display: 'flex', justifyContent: 'center', height: scaledHeight || undefined }
         : null
-    const pageTransform = isMobile ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : null
+    const pageTransform = isMobile ? { transform: `scale(${scale})`, transformOrigin: 'center' } : null
 
     return (
         <div style={styles.container}>
