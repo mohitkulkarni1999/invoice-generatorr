@@ -1,72 +1,24 @@
 import { useState } from 'react'
-import InvoiceForm from './components/InvoiceForm'
-import InvoicePreview from './components/InvoicePreview'
+import Login from './components/admin/Login'
+import Dashboard from './components/admin/Dashboard'
+import { getToken, setAuth, clearAuth } from './components/admin/api'
 
 function App() {
-  const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: '',
-    invoiceDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    companyName: '',
-    companyAddress: '',
-    companyGSTIN: '',
-    companyPAN: '',
-    companyPhone: '',
-    companyEmail: '',
-    bankName: '',
-    accountNo: '',
-    accountName: '',
-    accountType: '',
-    ifsc: '',
-    clientName: '',
-    clientPhone: '',
-    clientAddress: '',
-    clientGSTIN: '',
-    items: [
-      { description: '', hsnCode: '', quantity: 1, rate: 0, amount: 0 }
-    ],
-    cgstRate: 9,
-    sgstRate: 9,
-    pfCharge: '',
-    deliveryCharge: '',
-    notes: '',
-    terms: 'Payment is due within 30 days. Late payment subject to fees as per our terms and conditions.'
-  })
+  const [token, setToken] = useState(getToken())
+  const [admin, setAdmin] = useState(localStorage.getItem('adminUser') || 'admin')
 
-  const [showPreview, setShowPreview] = useState(false)
-
-  if (showPreview) {
-    return (
-      <div>
-        <div className="fixed top-4 left-4 z-50">
-          <button
-            onClick={() => setShowPreview(false)}
-            className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-200"
-          >
-            ← Back to Form
-          </button>
-        </div>
-        <InvoicePreview invoiceData={invoiceData} />
-      </div>
-    )
+  const handleLogin = (t, u) => {
+    setAuth(t, u)
+    setToken(t)
+    setAdmin(u)
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Invoice Generator</h1>
-          <p className="text-gray-600">Create professional invoices with GST support for Indian businesses</p>
-        </div>
+  const handleLogout = () => {
+    clearAuth()
+    setToken('')
+  }
 
-        <InvoiceForm
-          invoiceData={invoiceData}
-          setInvoiceData={setInvoiceData}
-          onPreview={() => setShowPreview(true)}
-        />
-      </div>
-    </div>
-  )
+  return token ? <Dashboard admin={admin} onLogout={handleLogout} /> : <Login onLogin={handleLogin} />
 }
 
 export default App

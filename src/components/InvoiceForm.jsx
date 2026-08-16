@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) {
+export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, onSave, saving, saveStatus }) {
     const handleInputChange = (field, value) => {
         setInvoiceData(prev => ({ ...prev, [field]: value }))
     }
@@ -49,9 +49,9 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
     }
 
     const calculateTotal = () => {
-        const pfCharge = parseFloat(invoiceData.pfCharge) || 0;
+        const pfCharge = (invoiceData.includePF === false) ? 0 : (parseFloat(invoiceData.pfCharge) || 0);
 
-        if (!invoiceData.deliveryCharge) {
+        if (!invoiceData.deliveryCharge || invoiceData.includeDelivery === false) {
             return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge;
         }
 
@@ -64,7 +64,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
     }
 
     const renderDeliveryCharge = () => {
-        if (!invoiceData.deliveryCharge) {
+        if (!invoiceData.deliveryCharge || invoiceData.includeDelivery === false) {
             return 'No Delivery Charge';
         }
 
@@ -355,25 +355,49 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                             />
                         </div>
                         <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">P&F Charge</label>
+                            <label className="flex items-center justify-between text-xs md:text-sm font-medium text-gray-700 mb-1">
+                                P&F Charge
+                                <span className="flex items-center gap-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={invoiceData.includePF !== false}
+                                        onChange={(e) => handleInputChange('includePF', e.target.checked)}
+                                        className="w-3.5 h-3.5 accent-blue-600"
+                                    />
+                                    <span className="text-xs font-normal text-gray-500">Include</span>
+                                </span>
+                            </label>
                             <input
                                 type="number"
                                 value={invoiceData.pfCharge}
                                 onChange={(e) => handleInputChange('pfCharge', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
                                 placeholder="P&F Charge"
                                 min="0"
                                 step="0.01"
+                                disabled={invoiceData.includePF === false}
                             />
                         </div>
                         <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Delivery Charge</label>
+                            <label className="flex items-center justify-between text-xs md:text-sm font-medium text-gray-700 mb-1">
+                                Delivery Charge
+                                <span className="flex items-center gap-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={invoiceData.includeDelivery !== false}
+                                        onChange={(e) => handleInputChange('includeDelivery', e.target.checked)}
+                                        className="w-3.5 h-3.5 accent-blue-600"
+                                    />
+                                    <span className="text-xs font-normal text-gray-500">Include</span>
+                                </span>
+                            </label>
                             <input
                                 type="text"
                                 value={invoiceData.deliveryCharge}
                                 onChange={(e) => handleInputChange('deliveryCharge', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
                                 placeholder="Delivery Charge"
+                                disabled={invoiceData.includeDelivery === false}
                             />
                         </div>
                     </div>
@@ -454,7 +478,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                         </div>
                         <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
                             <span className="text-xs md:text-sm text-gray-700">P&F Charge:</span>
-                            <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(invoiceData.pfCharge || 0)}</span>
+                            <span className="text-sm md:text-base font-semibold text-gray-800">{invoiceData.includePF === false ? formatCurrency(0) : formatCurrency(invoiceData.pfCharge || 0)}</span>
                         </div>
                         <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
                             <span className="text-xs md:text-sm text-gray-700">Delivery Charge:</span>
@@ -493,15 +517,36 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview }) 
                     </div>
                 </div>
 
-                {/* Preview Button */}
-                <div className="flex justify-end pt-2">
-                    <button
-                        type="button"
-                        onClick={onPreview}
-                        className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 rounded-lg shadow-lg transition-all duration-200 text-sm md:text-base"
-                    >
-                        Preview & Download Invoice
-                    </button>
+                {/* Save & Preview */}
+                <div className="flex flex-col gap-2 pt-2">
+                    {saveStatus && saveStatus.message && (
+                        <div
+                            className={`text-sm px-3 py-2 rounded-lg border ${
+                                saveStatus.type === 'success'
+                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                    : 'bg-red-50 text-red-700 border-red-200'
+                            }`}
+                        >
+                            {saveStatus.message}
+                        </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={onSave}
+                            disabled={saving}
+                            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 rounded-lg shadow-lg transition-all duration-200 text-sm md:text-base disabled:opacity-60"
+                        >
+                            {saving ? 'Saving...' : 'Save Invoice'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onPreview}
+                            className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold px-4 md:px-6 py-2 md:py-2.5 rounded-lg shadow-lg transition-all duration-200 text-sm md:text-base"
+                        >
+                            Preview & Download Invoice
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
