@@ -20,9 +20,12 @@ export default function InvoicePreview({ invoiceData }) {
         update()
         const timer = setTimeout(update, 150)
         window.addEventListener('resize', update)
+        const observer = invoiceRef.current ? new ResizeObserver(update) : null
+        if (observer) observer.observe(invoiceRef.current)
         return () => {
             clearTimeout(timer)
             window.removeEventListener('resize', update)
+            if (observer) observer.disconnect()
         }
     }, [])
 
@@ -102,28 +105,42 @@ export default function InvoicePreview({ invoiceData }) {
     const downloadPDF = async () => {
         try {
             setIsGenerating(true)
-            const element = invoiceRef.current
-            if (!element) return
+            const original = invoiceRef.current
+            if (!original) return
 
-            const originalTransform = element.style.transform
-            const originalTransformOrigin = element.style.transformOrigin
-            if (originalTransform) {
-                element.style.transform = 'none'
-                element.style.transformOrigin = 'top left'
-                await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-            }
+            // Build a full-size clone in an off-screen container so the visible
+            // preview (scaled down on mobile) is never modified or clipped.
+            const holder = document.createElement('div')
+            holder.style.position = 'fixed'
+            holder.style.left = '-10000px'
+            holder.style.top = '0'
+            holder.style.width = '210mm'
+            holder.style.height = 'auto'
+            holder.style.overflow = 'visible'
+            holder.style.zIndex = '-1'
+            holder.style.pointerEvents = 'none'
 
-            const canvas = await html2canvas(element, {
+            const clone = original.cloneNode(true)
+            clone.style.transform = 'none'
+            clone.style.transformOrigin = 'top left'
+            clone.style.margin = '0'
+            clone.style.width = '210mm'
+            clone.style.minHeight = '297mm'
+            clone.style.position = 'static'
+
+            holder.appendChild(clone)
+            document.body.appendChild(holder)
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+            const canvas = await html2canvas(clone, {
                 scale: 2.0,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                windowWidth: 1200
             })
 
-            if (originalTransform) {
-                element.style.transform = originalTransform
-                element.style.transformOrigin = originalTransformOrigin
-            }
+            document.body.removeChild(holder)
 
             const imgData = canvas.toDataURL('image/jpeg', 0.95)
             const pdf = new jsPDF({
@@ -133,8 +150,21 @@ export default function InvoicePreview({ invoiceData }) {
             })
 
             const imgWidth = 210
+            const pageHeight = 297
             const imgHeight = (canvas.height * imgWidth) / canvas.width
-            pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
+
+            // Multi-page support when content is taller than a single A4 page
+            let heightLeft = imgHeight
+            let position = 0
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+            heightLeft -= pageHeight
+            while (heightLeft > 0) {
+                position -= pageHeight
+                pdf.addPage()
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+                heightLeft -= pageHeight
+            }
+
             pdf.save(`Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`)
         } catch (error) {
             console.error('Error generating PDF:', error)
