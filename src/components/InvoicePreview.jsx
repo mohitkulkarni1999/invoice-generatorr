@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
@@ -9,7 +9,7 @@ export default function InvoicePreview({ invoiceData }) {
     const [scale, setScale] = useState(1)
     const [scaledHeight, setScaledHeight] = useState(null)
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const update = () => {
             const pageWidthPx = (210 / 25.4) * 96
             const available = window.innerWidth - 32
@@ -227,14 +227,23 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     const hasNotes = invoiceData.notes || invoiceData.terms
+    const pageWidthPx = (210 / 25.4) * 96
     const isMobile = scale < 1
     const downloadBtnStyle = isMobile
         ? { marginBottom: '1.5rem', width: '100%', display: 'flex', justifyContent: 'center' }
         : styles.downloadBtn
     const pageWrapperStyle = isMobile
-        ? { overflow: 'hidden', width: '100%', display: 'flex', justifyContent: 'center', height: scaledHeight || undefined }
+        ? {
+            position: 'relative',
+            overflow: 'hidden',
+            width: `${pageWidthPx * scale}px`,
+            height: scaledHeight || undefined,
+            margin: '0 auto'
+        }
         : null
-    const pageTransform = isMobile ? { transform: `scale(${scale})`, transformOrigin: 'center' } : null
+    const pageTransform = isMobile
+        ? { transform: `scale(${scale})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }
+        : null
 
     return (
         <div style={styles.container}>
