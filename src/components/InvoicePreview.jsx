@@ -100,7 +100,7 @@ export default function InvoicePreview({ invoiceData }) {
     const taxableValue = getTaxableValue()
     const total = calculateTotal()
     const totalGST = gst.cgst + gst.sgst
-    const rupees = (amount) => `₹ ${Number(amount).toFixed(2)}`
+    const rupees = (amount) => `₹ ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(amount) || 0)}`
 
     const downloadPDF = async () => {
         try {
@@ -376,7 +376,7 @@ export default function InvoicePreview({ invoiceData }) {
                                 </div>
                             </td>
                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>SUBTOTAL</td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>{rupees(calculateSubtotal())}</td>
+                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>{rupees(total)}</td>
                         </tr>
                         <tr>
                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000' }}>GROSS TOTAL</td>
