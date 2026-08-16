@@ -4,23 +4,41 @@ import { api, formatINR } from './api'
 export default function Invoices({ refreshKey }) {
   const [invoices, setInvoices] = useState([])
   const [search, setSearch] = useState('')
+  const [filterMode, setFilterMode] = useState('all')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [month, setMonth] = useState('')
+  const [year, setYear] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
+
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const q = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''
-      setInvoices(await api(`/api/invoices${q}`))
+      const p = new URLSearchParams()
+      if (search.trim()) p.set('search', search.trim())
+      if (filterMode === 'date') {
+        if (from) p.set('from', from)
+        if (to) p.set('to', to)
+      } else if (filterMode === 'month' && month) {
+        p.set('month', month)
+      } else if (filterMode === 'year' && year) {
+        p.set('year', year)
+      }
+      const q = p.toString()
+      setInvoices(await api(`/api/invoices${q ? `?${q}` : ''}`))
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [search])
+  }, [search, filterMode, from, to, month, year])
 
   useEffect(() => {
     load()
@@ -47,15 +65,108 @@ export default function Invoices({ refreshKey }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 className="text-xl font-bold text-gray-800">Invoices</h2>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search invoice, client or company..."
-          className="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-        />
+        {!loading && (
+          <span className="text-xs text-gray-500">
+            {invoices.length} invoice{invoices.length === 1 ? '' : 's'} found
+          </span>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow border border-gray-100 p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search invoice, client or company..."
+            className="w-full lg:w-80 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+          />
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'date', label: 'By Date' },
+              { id: 'month', label: 'By Month' },
+              { id: 'year', label: 'By Year' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setFilterMode(m.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  filterMode === m.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+            {(filterMode !== 'all' || from || to || month || year) && (
+              <button
+                onClick={() => {
+                  setFilterMode('all')
+                  setFrom('')
+                  setTo('')
+                  setMonth('')
+                  setYear('')
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {filterMode === 'date' && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 w-9 shrink-0">From</span>
+              <input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 w-9 shrink-0">To</span>
+              <input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {filterMode === 'month' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 w-16 shrink-0">Month</span>
+            <input
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+        )}
+
+        {filterMode === 'year' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 w-16 shrink-0">Year</span>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+            >
+              <option value="">Select year</option>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}

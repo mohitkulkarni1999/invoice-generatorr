@@ -93,7 +93,7 @@ export default function Dashboard({ admin, onLogout }) {
         </aside>
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {tab === 'overview' && <Overview refreshKey={refreshKey} />}
+          {tab === 'overview' && <Overview refreshKey={refreshKey} onNavigate={setTab} />}
           {tab === 'generate' && <GenerateInvoice onSaved={refresh} />}
           {tab === 'invoices' && <Invoices refreshKey={refreshKey} />}
           {tab === 'settings' && <Settings />}

@@ -13,13 +13,29 @@ const INSERT_COLS = `invoice_number, invoice_date, due_date,
 
 router.get('/', async (req, res) => {
   try {
-    const { search = '' } = req.query
+    const { search = '', from = '', to = '', month = '', year = '' } = req.query
     let sql = 'SELECT * FROM invoices'
     const params = []
-    if (search.trim()) {
-      sql += ` WHERE invoice_number ILIKE $1 OR client_name ILIKE $1 OR company_name ILIKE $1`
-      params.push(`%${search.trim()}%`)
+    const conds = []
+
+    const addParam = (v) => {
+      params.push(v)
+      return `$${params.length}`
     }
+
+    if (search.trim()) {
+      const p = addParam(`%${search.trim()}%`)
+      conds.push(`(invoice_number ILIKE ${p} OR client_name ILIKE ${p} OR company_name ILIKE ${p})`)
+    }
+    if (from) conds.push(`invoice_date >= ${addParam(from)}`)
+    if (to) conds.push(`invoice_date <= ${addParam(to)}`)
+    if (month) conds.push(`TO_CHAR(invoice_date, 'YYYY-MM') = ${addParam(month)}`)
+    if (year) {
+      const y = Number(year)
+      if (!Number.isNaN(y)) conds.push(`EXTRACT(YEAR FROM invoice_date) = ${addParam(y)}`)
+    }
+
+    if (conds.length) sql += ' WHERE ' + conds.join(' AND ')
     sql += ' ORDER BY invoice_date DESC, id DESC'
     const { rows } = await query(sql, params)
     res.json(rows.map(mapDbToApi))

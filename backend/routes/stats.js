@@ -34,10 +34,21 @@ router.get('/', async (req, res) => {
       LIMIT 6
     `)
 
+    const topClients = await query(`
+      SELECT client_name, COUNT(*)::int AS count, COALESCE(SUM(total), 0) AS revenue
+      FROM invoices
+      GROUP BY client_name
+      ORDER BY revenue DESC
+      LIMIT 5
+    `)
+
+    const t = totals.rows[0]
     res.json({
-      ...totals.rows[0],
+      ...t,
+      avgInvoiceValue: t.total_invoices > 0 ? Math.round((Number(t.total_revenue) / t.total_invoices) * 100) / 100 : 0,
       recentInvoices: recent.rows,
       monthlyTrend: byMonth.rows.reverse(),
+      topClients: topClients.rows,
     })
   } catch (err) {
     console.error('Stats error:', err)
