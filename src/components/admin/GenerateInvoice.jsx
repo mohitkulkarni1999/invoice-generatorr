@@ -50,9 +50,16 @@ export default function GenerateInvoice({ onSaved }) {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    api('/api/invoices/next-number')
-      .then((d) => setInvoiceData((prev) => ({ ...prev, invoiceNumber: d.invoiceNumber })))
-      .catch(() => {})
+    Promise.all([
+      api('/api/settings').catch(() => null),
+      api('/api/invoices/next-number').catch(() => null),
+    ]).then(([settings, num]) => {
+      setInvoiceData((prev) => ({
+        ...prev,
+        ...(settings || {}),
+        invoiceNumber: num && num.invoiceNumber ? num.invoiceNumber : prev.invoiceNumber,
+      }))
+    })
   }, [])
 
   const saveInvoice = async () => {
