@@ -191,7 +191,7 @@ export default function Invoices({ refreshKey }) {
                   <td className="px-4 py-3 font-semibold text-gray-800">{inv.invoiceNumber}</td>
                   <td className="px-4 py-3 text-gray-600">{inv.invoiceDate}</td>
                   <td className="px-4 py-3 text-gray-600">{inv.clientName}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatINR(inv.total)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatINR(Math.round(inv.total))}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => setSelected(inv)} className="text-blue-600 hover:text-blue-700 font-medium">
@@ -237,7 +237,7 @@ export default function Invoices({ refreshKey }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Date:</span> <span className="font-semibold text-gray-800">{selected.invoiceDate}</span></div>
                 <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Due Date:</span> <span className="font-semibold text-gray-800">{selected.dueDate}</span></div>
-                <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Total:</span> <span className="font-semibold text-gray-800">{formatINR(selected.total)}</span></div>
+                <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Total:</span> <span className="font-semibold text-gray-800">{formatINR(Math.round(selected.total))}</span></div>
               </div>
 
               <div>
@@ -275,7 +275,7 @@ export default function Invoices({ refreshKey }) {
                   <div className="flex justify-between"><span className="text-gray-500">SGST ({selected.sgstRate}%):</span><span className="font-semibold">{formatINR(selected.sgstAmount)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">P&amp;F:</span><span className="font-semibold">{formatINR(selected.pfCharge)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Delivery:</span><span className="font-semibold">{selected.deliveryCharge ? formatINR(selected.deliveryCharge) : 'No Delivery Charge'}</span></div>
-                  <div className="flex justify-between border-t pt-1 font-bold text-gray-800"><span>Total:</span><span>{formatINR(selected.total)}</span></div>
+                  <div className="flex justify-between border-t pt-1 font-bold text-gray-800"><span>Total:</span><span>{formatINR(Math.round(selected.total))}</span></div>
                 </div>
               </div>
 

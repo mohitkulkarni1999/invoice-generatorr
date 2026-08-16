@@ -380,7 +380,7 @@ export default function InvoicePreview({ invoiceData }) {
                         </tr>
                         <tr>
                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000' }}>GROSS TOTAL</td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000' }}>{rupees(total)}</td>
+                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000' }}>{rupees(Math.round(total))}</td>
                         </tr>
                     </tbody>
                 </table>

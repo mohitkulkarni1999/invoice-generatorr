@@ -31,7 +31,7 @@ export const computeTotals = (data) => {
     taxableValue: round2(taxableValue),
     cgst: round2(cgst),
     sgst: round2(sgst),
-    total: round2(total),
+    total: Math.round(total),
   }
 }
 

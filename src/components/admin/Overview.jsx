@@ -158,7 +158,7 @@ export default function Overview({ refreshKey, onNavigate }) {
                       <p className="text-xs text-gray-500 truncate">{r.client_name} · {r.invoice_date}</p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-gray-800 shrink-0">{formatINR(r.total)}</span>
+                  <span className="text-sm font-bold text-gray-800 shrink-0">{formatINR(Math.round(r.total))}</span>
                 </li>
               ))}
             </ul>

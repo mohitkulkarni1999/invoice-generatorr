@@ -491,7 +491,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
                         </div>
                         <div className="flex justify-between items-center pt-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                             <span className="text-sm md:text-base font-bold text-gray-800">Total Amount:</span>
-                            <span className="text-lg md:text-xl font-bold text-blue-600">{formatCurrency(calculateTotal())}</span>
+                            <span className="text-lg md:text-xl font-bold text-blue-600">{formatCurrency(Math.round(calculateTotal()))}</span>
                         </div>
                     </div>
                 </div>
