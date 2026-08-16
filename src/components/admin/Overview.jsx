@@ -41,7 +41,7 @@ export default function Overview({ refreshKey }) {
           {stats.monthlyTrend.length === 0 ? (
             <p className="text-gray-400 text-sm">No data yet</p>
           ) : (
-            <div className="flex items-end gap-3 h-40">
+            <div className="flex items-end gap-2 sm:gap-3 h-40">
               {stats.monthlyTrend.map((m) => (
                 <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs font-semibold text-gray-600">₹{Math.round(Number(m.revenue) / 1000)}k</span>

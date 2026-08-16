@@ -27,9 +27,9 @@ export default defineConfig([
     },
   },
   {
-    files: ['**/*.css'],
-    rules: {
-      'at-rule-no-unknown': ['error', { ignoreAtRules: ['tailwind', 'apply', 'variants', 'responsive', 'screen'] }],
+    files: ['backend/**/*.js', 'api/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ])

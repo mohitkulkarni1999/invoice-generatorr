@@ -5,7 +5,16 @@ dotenv.config()
 
 const { Pool } = pg
 
-const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || null
+let connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || null
+
+if (connectionString) {
+  // node-postgres treats `sslmode=require` as verify-full in recent versions,
+  // which fails against managed providers (Supabase pooler). Strip the param
+  // and rely on the explicit ssl config below instead.
+  connectionString = connectionString
+    .replace(/([?&])sslmode=[^&]*/i, '$1')
+    .replace(/[?&]$/, '')
+}
 
 const pool = connectionString
   ? new Pool({

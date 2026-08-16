@@ -1,10 +1,30 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
 export default function InvoicePreview({ invoiceData }) {
     const invoiceRef = useRef()
     const [isGenerating, setIsGenerating] = useState(false)
+
+    const [scale, setScale] = useState(1)
+    const [scaledHeight, setScaledHeight] = useState(null)
+
+    useEffect(() => {
+        const update = () => {
+            const pageWidthPx = (210 / 25.4) * 96
+            const available = window.innerWidth - 32
+            const s = available < pageWidthPx ? Math.max(available / pageWidthPx, 0.25) : 1
+            setScale(s)
+            if (invoiceRef.current) setScaledHeight(invoiceRef.current.offsetHeight * s)
+        }
+        update()
+        const timer = setTimeout(update, 150)
+        window.addEventListener('resize', update)
+        return () => {
+            clearTimeout(timer)
+            window.removeEventListener('resize', update)
+        }
+    }, [])
 
     // --- Helper Functions ---
 
@@ -74,7 +94,6 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     const gst = calculateGST()
-    const subtotal = calculateSubtotal()
     const taxableValue = getTaxableValue()
     const total = calculateTotal()
     const totalGST = gst.cgst + gst.sgst
@@ -86,12 +105,25 @@ export default function InvoicePreview({ invoiceData }) {
             const element = invoiceRef.current
             if (!element) return
 
+            const originalTransform = element.style.transform
+            const originalTransformOrigin = element.style.transformOrigin
+            if (originalTransform) {
+                element.style.transform = 'none'
+                element.style.transformOrigin = 'top left'
+                await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+            }
+
             const canvas = await html2canvas(element, {
                 scale: 2.0,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff'
             })
+
+            if (originalTransform) {
+                element.style.transform = originalTransform
+                element.style.transformOrigin = originalTransformOrigin
+            }
 
             const imgData = canvas.toDataURL('image/jpeg', 0.95)
             const pdf = new jsPDF({
@@ -113,7 +145,6 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     // --- Styles ---
-    const accent = '#000'
     const ink = '#000'
     const muted = '#000'
     const font = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
@@ -166,16 +197,25 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     const hasNotes = invoiceData.notes || invoiceData.terms
+    const isMobile = scale < 1
+    const downloadBtnStyle = isMobile
+        ? { marginBottom: '1.5rem', width: '100%', display: 'flex', justifyContent: 'center' }
+        : styles.downloadBtn
+    const pageWrapperStyle = isMobile
+        ? { overflow: 'hidden', width: '100%', display: 'flex', justifyContent: 'center', height: scaledHeight || undefined }
+        : null
+    const pageTransform = isMobile ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : null
 
     return (
         <div style={styles.container}>
-            <div style={styles.downloadBtn}>
+            <div style={downloadBtnStyle}>
                 <button onClick={downloadPDF} disabled={isGenerating} style={styles.button}>
                     {isGenerating ? 'Generating...' : 'Download PDF'}
                 </button>
             </div>
 
-            <div ref={invoiceRef} style={styles.page}>
+            <div style={pageWrapperStyle}>
+            <div ref={invoiceRef} style={{ ...styles.page, ...pageTransform }}>
                 <div style={styles.frame}>
                 {/* Header */}
                 <div style={styles.header}>
@@ -342,6 +382,7 @@ export default function InvoicePreview({ invoiceData }) {
 
                 {/* Page Number */}
                 <div style={styles.pageNo}>1</div>
+            </div>
             </div>
         </div>
     )

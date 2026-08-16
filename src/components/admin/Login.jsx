@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 sm:p-8">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Invoice Generator</h1>
           <p className="text-gray-500 text-sm mt-1">Admin Dashboard</p>

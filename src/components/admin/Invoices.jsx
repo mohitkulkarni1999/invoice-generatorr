@@ -106,7 +106,7 @@ export default function Invoices({ refreshKey }) {
               <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-gray-700 text-lg leading-none">✕</button>
             </div>
             <div className="p-5 space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-gray-500 text-xs uppercase font-semibold">From</p>
                   <p className="font-semibold text-gray-800">{selected.companyName}</p>
@@ -123,7 +123,7 @@ export default function Invoices({ refreshKey }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Date:</span> <span className="font-semibold text-gray-800">{selected.invoiceDate}</span></div>
                 <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Due Date:</span> <span className="font-semibold text-gray-800">{selected.dueDate}</span></div>
                 <div className="bg-gray-50 rounded p-2"><span className="text-gray-500">Total:</span> <span className="font-semibold text-gray-800">{formatINR(selected.total)}</span></div>
@@ -131,7 +131,8 @@ export default function Invoices({ refreshKey }) {
 
               <div>
                 <p className="text-gray-500 text-xs uppercase font-semibold mb-2">Items</p>
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
                   <thead className="bg-gray-50 text-left text-gray-500">
                     <tr>
                       <th className="px-3 py-2 font-medium">Description</th>
@@ -153,10 +154,11 @@ export default function Invoices({ refreshKey }) {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
 
               <div className="flex justify-end">
-                <div className="space-y-1 text-xs w-56">
+                <div className="space-y-1 text-xs w-full sm:w-56">
                   <div className="flex justify-between"><span className="text-gray-500">Subtotal:</span><span className="font-semibold">{formatINR(selected.subtotal)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">CGST ({selected.cgstRate}%):</span><span className="font-semibold">{formatINR(selected.cgstAmount)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">SGST ({selected.sgstRate}%):</span><span className="font-semibold">{formatINR(selected.sgstAmount)}</span></div>
@@ -166,7 +168,7 @@ export default function Invoices({ refreshKey }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded p-3">
                   <p className="text-gray-500 text-xs uppercase font-semibold mb-1">Bank Details</p>
                   <p className="text-gray-800">{selected.bankName}</p>
