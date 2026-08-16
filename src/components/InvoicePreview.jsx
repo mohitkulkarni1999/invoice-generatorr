@@ -376,7 +376,7 @@ export default function InvoicePreview({ invoiceData }) {
                                 </div>
                             </td>
                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>SUBTOTAL</td>
-                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>{rupees(taxableValue)}</td>
+                            <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000', borderBottom: '1px solid #000' }}>{rupees(calculateSubtotal())}</td>
                         </tr>
                         <tr>
                             <td style={{ ...styles.td, textAlign: 'right', fontWeight: '800', backgroundColor: '#ffffff', color: '#000' }}>GROSS TOTAL</td>

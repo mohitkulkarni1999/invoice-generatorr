@@ -3,10 +3,17 @@ import InvoiceForm from '../InvoiceForm'
 import InvoicePreview from '../InvoicePreview'
 import { api } from './api'
 
+const toLocalISODate = (d) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+}
+
 const initialData = {
   invoiceNumber: '',
-  invoiceDate: new Date().toISOString().split('T')[0],
-  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  invoiceDate: toLocalISODate(new Date()),
+  dueDate: toLocalISODate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
   companyName: 'TechNova Solutions Pvt. Ltd.',
   companyAddress: 'Plot No. 42, Sector 21, Andheri East, Mumbai, Maharashtra - 400069',
   companyGSTIN: '27AAKCS1483C1Z8',

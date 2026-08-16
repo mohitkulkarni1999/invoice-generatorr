@@ -1,3 +1,5 @@
+import DateField from './DateField'
+
 export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, onSave, saving, saveStatus }) {
     const handleInputChange = (field, value) => {
         setInvoiceData(prev => ({ ...prev, [field]: value }))
@@ -178,20 +180,16 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
                         </div>
                         <div>
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Invoice Date *</label>
-                            <input
-                                type="date"
+                            <DateField
                                 value={invoiceData.invoiceDate}
-                                onChange={(e) => handleInputChange('invoiceDate', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                onChange={(value) => handleInputChange('invoiceDate', value)}
                             />
                         </div>
                         <div>
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                            <input
-                                type="date"
+                            <DateField
                                 value={invoiceData.dueDate}
-                                onChange={(e) => handleInputChange('dueDate', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                onChange={(value) => handleInputChange('dueDate', value)}
                             />
                         </div>
                     </div>
