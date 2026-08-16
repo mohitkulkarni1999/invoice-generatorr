@@ -218,7 +218,7 @@ export default function InvoicePreview({ invoiceData }) {
         notesTitle: { fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#000', marginBottom: '3px' },
 
         footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', padding: '8mm 12mm 10mm' },
-        paymentInfo: { fontSize: '10.5px', lineHeight: '1.7', color: '#000' },
+        paymentInfo: { fontSize: '10.5px', lineHeight: '1.7', color: '#000', border: '1px solid #000', padding: '10px 14px' },
         paymentTitle: { fontWeight: '800', fontSize: '12px', color: '#000', marginBottom: '4px' },
         signatureBox: { textAlign: 'center', minWidth: '170px' },
         signatureSpace: { height: '90px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },
@@ -321,23 +321,33 @@ export default function InvoicePreview({ invoiceData }) {
                             </tr>
                         ))}
 
-                        {invoiceData.includePF !== false || invoiceData.includeDelivery !== false ? (
+                        {invoiceData.includePF !== false ? (
                         <tr style={styles.summaryBg}>
-                            <td style={{ ...styles.tdLeft, fontWeight: '700' }}>P &amp; F + DELIVERY</td>
+                            <td style={styles.tdLeft}>P &amp; F</td>
                             <td style={styles.td}></td>
                             <td style={styles.td}></td>
                             <td style={styles.td}></td>
-                            <td style={styles.tdRight}>{rupees(getPFCharge() + getDeliveryCharge())}</td>
+                            <td style={styles.tdRight}>{rupees(getPFCharge())}</td>
+                        </tr>
+                        ) : null}
+
+                        {invoiceData.includeDelivery !== false ? (
+                        <tr style={styles.summaryBg}>
+                            <td style={styles.tdLeft}>DELIVERY</td>
+                            <td style={styles.td}></td>
+                            <td style={styles.td}></td>
+                            <td style={styles.td}></td>
+                            <td style={styles.tdRight}>{rupees(getDeliveryCharge())}</td>
                         </tr>
                         ) : null}
 
                         {/* Taxable Value */}
                         <tr style={styles.summaryBg}>
-                            <td style={{ ...styles.tdLeft, fontWeight: '700' }}>TAXABLE VALUE</td>
+                            <td style={styles.tdLeft}>TAXABLE VALUE</td>
                             <td style={styles.td}></td>
                             <td style={styles.td}></td>
                             <td style={styles.td}></td>
-                            <td style={{ ...styles.tdRight, fontWeight: '700' }}>{rupees(taxableValue)}</td>
+                            <td style={styles.tdRight}>{rupees(taxableValue)}</td>
                         </tr>
 
                         {/* SGST */}
@@ -403,11 +413,11 @@ export default function InvoicePreview({ invoiceData }) {
                 <div style={styles.footer}>
                     <div style={styles.paymentInfo}>
                         <div style={styles.paymentTitle}>Payment Details</div>
-                        <div>Bank Name: <span style={{ fontWeight: '700' }}>{invoiceData.bankName}</span></div>
-                        <div>Account No: <span style={{ fontWeight: '700' }}>{invoiceData.accountNo}</span></div>
+                        <div>Bank Name: {invoiceData.bankName}</div>
+                        <div>Account No: {invoiceData.accountNo}</div>
                         <div>Account Name: {invoiceData.accountName || invoiceData.companyName}</div>
                         <div>Account Type: {invoiceData.accountType}</div>
-                        <div>IFSC: <span style={{ fontWeight: '700' }}>{invoiceData.ifsc}</span></div>
+                        <div>IFSC: {invoiceData.ifsc}</div>
                     </div>
                     <div style={styles.signatureBox}>
                         <div style={{ fontSize: '10px', color: muted }}>Client Signature</div>
