@@ -312,7 +312,7 @@ export default function InvoicePreview({ invoiceData }) {
                         {invoiceData.items.map((item, index) => (
                             <tr key={index} style={index % 2 ? styles.rowAlt : null}>
                                 <td style={styles.tdLeft}>
-                                    <div style={{ fontWeight: '700' }}>{item.description}</div>
+                                    <div>{item.description}</div>
                                 </td>
                                 <td style={styles.td}>{item.hsnCode}</td>
                                 <td style={styles.td}>{item.quantity}</td>
