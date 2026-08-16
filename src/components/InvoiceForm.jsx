@@ -37,7 +37,7 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
 
     // Calculate totals
     const calculateSubtotal = () => {
-        return invoiceData.items.reduce((sum, item) => sum + item.amount, 0)
+        return invoiceData.items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
     }
 
     const getPFCharge = () => {

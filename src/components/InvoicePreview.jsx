@@ -54,7 +54,7 @@ export default function InvoicePreview({ invoiceData }) {
     }
 
     const calculateSubtotal = () => {
-        return invoiceData.items.reduce((sum, item) => sum + item.amount, 0)
+        return invoiceData.items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
     }
 
     const calculateGST = () => {
