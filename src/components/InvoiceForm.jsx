@@ -38,27 +38,34 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
         return invoiceData.items.reduce((sum, item) => sum + item.amount, 0)
     }
 
-    const calculateCGST = () => {
-        return calculateSubtotal() * (parseFloat(invoiceData.cgstRate) || 0) / 100
+    const getPFCharge = () => {
+        return (invoiceData.includePF === false) ? 0 : (parseFloat(invoiceData.pfCharge) || 0);
     }
 
-    const calculateSGST = () => {
-        return calculateSubtotal() * (parseFloat(invoiceData.sgstRate) || 0) / 100
-    }
-
-    const calculateTotal = () => {
-        const pfCharge = (invoiceData.includePF === false) ? 0 : (parseFloat(invoiceData.pfCharge) || 0);
-
-        if (!invoiceData.deliveryCharge || invoiceData.includeDelivery === false) {
-            return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge;
-        }
+    const getDeliveryCharge = () => {
+        if (!invoiceData.deliveryCharge || invoiceData.includeDelivery === false) return 0;
 
         const deliveryChargeRaw = invoiceData.deliveryCharge.toString();
         const numericPart = deliveryChargeRaw.replace(/[^0-9.]/g, '');
         const deliveryChargeNum = parseFloat(numericPart);
-        const deliveryCharge = (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0;
 
-        return calculateSubtotal() + calculateCGST() + calculateSGST() + pfCharge + deliveryCharge;
+        return (numericPart && !isNaN(deliveryChargeNum)) ? deliveryChargeNum : 0;
+    }
+
+    const getTaxableValue = () => {
+        return calculateSubtotal() + getPFCharge() + getDeliveryCharge();
+    }
+
+    const calculateCGST = () => {
+        return getTaxableValue() * (parseFloat(invoiceData.cgstRate) || 0) / 100
+    }
+
+    const calculateSGST = () => {
+        return getTaxableValue() * (parseFloat(invoiceData.sgstRate) || 0) / 100
+    }
+
+    const calculateTotal = () => {
+        return getTaxableValue() + calculateCGST() + calculateSGST();
     }
 
     const renderDeliveryCharge = () => {
@@ -467,20 +474,20 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
                             <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateSubtotal())}</span>
                         </div>
                         <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
+                            <span className="text-xs md:text-sm text-gray-700">P&F Charge:</span>
+                            <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(getPFCharge())}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
+                            <span className="text-xs md:text-sm text-gray-700">Delivery Charge:</span>
+                            <span className="text-sm md:text-base font-semibold text-gray-800">{renderDeliveryCharge()}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
                             <span className="text-xs md:text-sm text-gray-700">CGST ({invoiceData.cgstRate}%):</span>
                             <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateCGST())}</span>
                         </div>
                         <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
                             <span className="text-xs md:text-sm text-gray-700">SGST ({invoiceData.sgstRate}%):</span>
                             <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateSGST())}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
-                            <span className="text-xs md:text-sm text-gray-700">P&F Charge:</span>
-                            <span className="text-sm md:text-base font-semibold text-gray-800">{invoiceData.includePF === false ? formatCurrency(0) : formatCurrency(invoiceData.pfCharge || 0)}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
-                            <span className="text-xs md:text-sm text-gray-700">Delivery Charge:</span>
-                            <span className="text-sm md:text-base font-semibold text-gray-800">{renderDeliveryCharge()}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                             <span className="text-sm md:text-base font-bold text-gray-800">Total Amount:</span>
