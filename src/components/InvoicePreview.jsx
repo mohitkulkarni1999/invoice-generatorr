@@ -102,70 +102,189 @@ export default function InvoicePreview({ invoiceData }) {
     const totalGST = gst.cgst + gst.sgst
     const rupees = (amount) => `₹ ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(amount) || 0)}`
 
+    // const downloadPDF = async () => {
+    //     try {
+    //         setIsGenerating(true)
+    //         const original = invoiceRef.current
+    //         if (!original) return
+
+    //         // Build a full-size clone in an off-screen container so the visible
+    //         // preview (scaled down on mobile) is never modified or clipped.
+    //         const holder = document.createElement('div')
+    //         holder.style.position = 'fixed'
+    //         holder.style.left = '-10000px'
+    //         holder.style.top = '0'
+    //         holder.style.width = '210mm'
+    //         holder.style.height = '297mm'
+    //         holder.style.overflow = 'hidden'
+    //         holder.style.zIndex = '-1'
+    //         holder.style.pointerEvents = 'none'
+
+    //         const clone = original.cloneNode(true)
+    //         clone.style.transform = 'none'
+    //         clone.style.transformOrigin = 'top left'
+    //         clone.style.margin = '0'
+    //         clone.style.width = '210mm'
+    //         clone.style.minHeight = '297mm'
+    //         clone.style.maxHeight = '297mm'
+    //         clone.style.overflow = 'hidden'
+    //         clone.style.position = 'static'
+
+    //         holder.appendChild(clone)
+    //         document.body.appendChild(holder)
+    //         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+    //         const canvas = await html2canvas(clone, {
+    //             scale: 2.0,
+    //             useCORS: true,
+    //             logging: false,
+    //             backgroundColor: '#ffffff',
+    //             windowWidth: 1200,
+    //             width: clone.scrollWidth,
+    //             height: clone.scrollHeight
+    //         })
+
+    //         document.body.removeChild(holder)
+
+    //         const imgData = canvas.toDataURL('image/jpeg', 0.95)
+    //         const pdf = new jsPDF({
+    //             orientation: 'portrait',
+    //             unit: 'mm',
+    //             format: 'a4'
+    //         })
+
+    //         const imgWidth = 210
+    //         const pageHeight = 297
+    //         const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    //         // Only add extra pages when content meaningfully overflows a single A4 page.
+    //         // A small tolerance avoids an empty 2nd page caused by mm-to-px rounding.
+    //         const tolerance = 1.5
+    //         const pageCount = Math.max(1, Math.ceil((imgHeight - tolerance) / pageHeight))
+    //         let position = 0
+    //         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+    //         for (let i = 1; i < pageCount; i++) {
+    //             position -= pageHeight
+    //             pdf.addPage()
+    //             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+    //         }
+
+    //         pdf.save(`Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`)
+    //     } catch (error) {
+    //         console.error('Error generating PDF:', error)
+    //         alert('Failed to generate PDF.')
+    //     } finally {
+    //         setIsGenerating(false)
+    //     }
+    // }
+
     const downloadPDF = async () => {
         try {
             setIsGenerating(true)
+    
             const original = invoiceRef.current
             if (!original) return
-
-            // Build a full-size clone in an off-screen container so the visible
-            // preview (scaled down on mobile) is never modified or clipped.
+    
             const holder = document.createElement('div')
             holder.style.position = 'fixed'
             holder.style.left = '-10000px'
             holder.style.top = '0'
             holder.style.width = '210mm'
-            holder.style.height = 'auto'
+            holder.style.background = '#fff'
             holder.style.overflow = 'visible'
             holder.style.zIndex = '-1'
-            holder.style.pointerEvents = 'none'
-
+    
             const clone = original.cloneNode(true)
+    
             clone.style.transform = 'none'
             clone.style.transformOrigin = 'top left'
             clone.style.margin = '0'
             clone.style.width = '210mm'
-            clone.style.minHeight = '297mm'
+            clone.style.minHeight = '0'
+            clone.style.height = 'auto'
+            clone.style.overflow = 'visible'
             clone.style.position = 'static'
-
+    
             holder.appendChild(clone)
             document.body.appendChild(holder)
-            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-
+    
+            await new Promise((resolve) =>
+                requestAnimationFrame(() =>
+                    requestAnimationFrame(resolve)
+                )
+            )
+    
+            // Get actual invoice height
+            const contentHeight = clone.scrollHeight
+            const contentWidth = clone.scrollWidth
+    
+            // A4 dimensions in pixels at the current rendered size
+            const maxHeight = 1122 // approximately 297mm
+            const maxWidth = 794   // approximately 210mm
+    
+            // Calculate scale required to fit everything
+            const scaleX = maxWidth / contentWidth
+            const scaleY = maxHeight / contentHeight
+    
+            // Use the smaller scale
+            const scale = Math.min(scaleX, scaleY, 1)
+    
+            clone.style.transform = `scale(${scale})`
+            clone.style.transformOrigin = 'top left'
+    
+            // Give browser time to apply scaling
+            await new Promise((resolve) =>
+                requestAnimationFrame(() => resolve())
+            )
+    
             const canvas = await html2canvas(clone, {
-                scale: 2.0,
+                scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
                 windowWidth: 1200
             })
-
+    
             document.body.removeChild(holder)
-
+    
             const imgData = canvas.toDataURL('image/jpeg', 0.95)
+    
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
                 format: 'a4'
             })
-
-            const imgWidth = 210
+    
+            const pageWidth = 210
             const pageHeight = 297
-            const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-            // Only add extra pages when content meaningfully overflows a single A4 page.
-            // A small tolerance avoids an empty 2nd page caused by mm-to-px rounding.
-            const tolerance = 1.5
-            const pageCount = Math.max(1, Math.ceil((imgHeight - tolerance) / pageHeight))
-            let position = 0
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-            for (let i = 1; i < pageCount; i++) {
-                position -= pageHeight
-                pdf.addPage()
-                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+    
+            // Calculate image size while keeping aspect ratio
+            let imgWidth = pageWidth
+            let imgHeight = (canvas.height * imgWidth) / canvas.width
+    
+            // Make absolutely sure it fits inside A4
+            if (imgHeight > pageHeight) {
+                imgHeight = pageHeight
+                imgWidth = (canvas.width * imgHeight) / canvas.height
             }
-
-            pdf.save(`Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`)
+    
+            // Center horizontally
+            const x = (pageWidth - imgWidth) / 2
+    
+            pdf.addImage(
+                imgData,
+                'JPEG',
+                x,
+                0,
+                imgWidth,
+                imgHeight
+            )
+    
+            // ONLY ONE PAGE
+            pdf.save(
+                `Invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`
+            )
+    
         } catch (error) {
             console.error('Error generating PDF:', error)
             alert('Failed to generate PDF.')
@@ -189,9 +308,9 @@ export default function InvoicePreview({ invoiceData }) {
         frame: { flex: '1', border: '2px solid #000', margin: '8mm', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
 
         header: { padding: '8mm 12mm 5mm', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' },
-        companyName: { fontSize: '21px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', color: '#000', marginBottom: '4px' },
-        companyDetails: { fontSize: '10.5px', lineHeight: '1.6', color: '#000' },
-        titleBox: { backgroundColor: '#ffffff', color: '#000', border: '2px solid #000', padding: '8px 18px', textAlign: 'center', whiteSpace: 'nowrap' },
+        companyName: { fontSize: '28px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', color: '#000', marginBottom: '4px' },
+        companyDetails: { fontSize: '14px', lineHeight: '1.6', color: '#000' },
+        titleBox: { backgroundColor: '#ffffff', color: '#000', border: '2px solid #000', padding: '8px 18px', textAlign: 'center', whiteSpace: 'nowrap',  },
         titleText: { fontSize: '17px', fontWeight: '800', letterSpacing: '1.5px' },
         metaText: { fontSize: '10.5px', textAlign: 'right', marginTop: '8px', lineHeight: '1.8', color: '#000' },
 
@@ -200,31 +319,56 @@ export default function InvoicePreview({ invoiceData }) {
         infoGrid: { display: 'flex', padding: '0 12mm 6mm' },
         colLeft: { flex: '1.3', paddingRight: '14px', fontSize: '11px', lineHeight: '1.6' },
         colRight: { flex: '1', paddingLeft: '14px', fontSize: '11px', lineHeight: '1.8', borderLeft: '1px solid #000' },
-        sectionLabel: { fontSize: '9px', color: '#000', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '3px' },
-        label: { fontWeight: '700', color: '#000' },
-        partyName: { fontWeight: '700', fontSize: '13px', color: '#000', marginBottom: '3px' },
-        address: { whiteSpace: 'pre-line', marginBottom: '5px', color: '#000' },
+        sectionLabel: { fontSize: '15px', color: '#000', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '3px' },
+        label: { fontWeight: '700', color: '#000, ', fontSize: '15px' },
+        
+        partyName: { fontWeight: '700', fontSize: '18px', color: '#000', marginBottom: '3px' },
+        address: { whiteSpace: 'pre-line', marginBottom: '10px', color: '#000', fontSize: '15px' },
 
-        table: { width: 'calc(100% - 24mm)', margin: '0 12mm 6mm', borderCollapse: 'collapse', fontSize: '10.5px', border: '1px solid #000' },
-        th: { backgroundColor: '#ffffff', color: '#000', padding: '7px 8px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', fontSize: '9.5px', letterSpacing: '0.5px', border: '1px solid #000' },
-        td: { border: '1px solid #000', padding: '7px 8px', textAlign: 'center' },
-        tdLeft: { border: '1px solid #000', padding: '7px 10px', textAlign: 'left' },
-        tdRight: { border: '1px solid #000', padding: '7px 10px', textAlign: 'right' },
+        table: { width: 'calc(100% - 24mm)', margin: '0 12mm 6mm', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #000' },
+        th: { backgroundColor: '#ffffff', color: '#000', padding: '7px 8px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', fontSize: '15px', letterSpacing: '0.5px', border: '1px solid #000' },
+        td: { border: '1px solid #000', padding: '7px 8px', textAlign: 'center', fontSize: '13px'},
+        tdLeft: { border: '1px solid #000', padding: '7px 10px', textAlign: 'left', fontSize: '13px' },
+        tdRight: { border: '1px solid #000', padding: '7px 10px', textAlign: 'right', fontSize: '13px' },
         rowAlt: { backgroundColor: '#ffffff' },
         summaryBg: { backgroundColor: '#ffffff' },
 
         notesSection: { display: 'flex', gap: '14px', padding: '0 12mm 6mm' },
-        notesBlock: { flex: '1', backgroundColor: '#ffffff', border: '1px solid #000', padding: '8px 12px', fontSize: '10px', lineHeight: '1.6', color: '#000' },
-        notesTitle: { fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#000', marginBottom: '3px' },
+        notesBlock: { flex: '1', backgroundColor: '#ffffff', border: '1px solid #000', padding: '8px 12px', fontSize: '13px', lineHeight: '1.6', color: '#000' },
+        notesTitle: { fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#000', marginBottom: '3px' },
 
         footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', padding: '8mm 12mm 10mm' },
-        paymentInfo: { fontSize: '10.5px', lineHeight: '1.7', color: '#000', border: '1px solid #000', padding: '10px 14px' },
+        paymentInfo: { fontSize: '13px', lineHeight: '1.7', color: '#000', border: '1px solid #000', padding: '10px 14px' },
         paymentTitle: { fontWeight: '800', fontSize: '12px', color: '#000', marginBottom: '4px' },
         signatureBox: { textAlign: 'center', minWidth: '170px' },
-        signatureSpace: { height: '90px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },
+        signatureSpace: { height: '90px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', fontSize: '13px' },
 
         pageNo: { position: 'absolute', bottom: '4mm', right: '12mm', fontSize: '9px', color: '#000' },
+
+    
     }
+
+    const invoiceStyles = {
+      
+        clientPhone: {
+          fontSize: '13px',
+          fontWeight: '600',
+          color: '#000',
+        },
+
+        clientGSTIN: {
+            fontSize: '13px',
+            fontWeight: '600',
+            color: '#000',
+          },
+
+          companyName: {
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#000',
+          },
+    }
+    
 
     const hasNotes = invoiceData.notes || invoiceData.terms
     const pageWidthPx = (210 / 25.4) * 96
@@ -261,7 +405,7 @@ export default function InvoicePreview({ invoiceData }) {
                     <div>
                         <div style={styles.companyName}>{invoiceData.companyName || 'COMPANY NAME'}</div>
                         <div style={styles.companyDetails}>
-                            {invoiceData.companyAddress}<br />
+                            {invoiceData.companyAddress}<br /><br />
                             Contact No. {invoiceData.companyPhone} &nbsp;&nbsp; E-Mail: {invoiceData.companyEmail}
                         </div>
                     </div>
@@ -270,9 +414,9 @@ export default function InvoicePreview({ invoiceData }) {
                             <div style={styles.titleText}>TAX INVOICE</div>
                         </div>
                         <div style={styles.metaText}>
-                            <div><span style={styles.label}>INVOICE NO:</span> {invoiceData.invoiceNumber}</div>
-                            <div><span style={styles.label}>DATE:</span> {formatDate(invoiceData.invoiceDate)}</div>
-                            {invoiceData.dueDate && <div><span style={styles.label}>DUE DATE:</span> {formatDate(invoiceData.dueDate)}</div>}
+                            <div><span style={styles.label}>INVOICE NO:</span><span style={styles.companyDetails}> {invoiceData.invoiceNumber} </span></div>
+                            <div><span style={styles.label}>DATE:</span> <span style={styles.companyDetails}>{formatDate(invoiceData.invoiceDate)}</span></div>
+                            {invoiceData.dueDate && <div><span style={styles.label}>DUE DATE:</span> <span style={styles.companyDetails}>{formatDate(invoiceData.dueDate)}</span></div>}
                         </div>
                     </div>
                 </div>
@@ -285,15 +429,16 @@ export default function InvoicePreview({ invoiceData }) {
                         <div style={styles.sectionLabel}>Billed To</div>
                         <div style={styles.partyName}>{invoiceData.clientName}</div>
                         <div style={styles.address}>{invoiceData.clientAddress}</div>
-                        <div><span style={styles.label}>Contact:</span> {invoiceData.clientPhone}</div>
-                        <div style={{ marginTop: '3px' }}><span style={styles.label}>GST:</span> {invoiceData.clientGSTIN}</div>
+                        <div><span style={styles.label}>Contact:</span>{' '} <span style={invoiceStyles.clientPhone}>{invoiceData.clientPhone}</span></div>
+                        <div style={{ marginTop: '3px' }}><span style={styles.label}>GST:</span> <span style={invoiceStyles.clientGSTIN}>{invoiceData.clientGSTIN}</span></div>
                     </div>
                     <div style={styles.colRight}>
-                        <div style={styles.sectionLabel}>Company Details</div>
-                        <div><span style={styles.label}>GSTIN:</span> {invoiceData.companyGSTIN}</div>
-                        <div><span style={styles.label}>PAN:</span> {invoiceData.companyPAN}</div>
-                        <div style={{ marginTop: '8px' }}><span style={styles.label}>PAYABLE TO:</span> {invoiceData.companyName}</div>
+                        
+                        <div style={styles.sectionLabel}>Payable To</div>
+                        <div style={styles.partyName}>{invoiceData.companyName}</div>
                         <div style={styles.address}>{invoiceData.companyAddress}</div>
+                        <div><span style={styles.label}>GSTIN:</span> <span style={invoiceStyles.clientGSTIN}>{invoiceData.companyGSTIN}</span></div>
+                        <div><span style={styles.label}>PAN:</span> <span style={invoiceStyles.clientGSTIN}>{invoiceData.companyPAN}</span></div>
                     </div>
                 </div>
 
@@ -380,7 +525,7 @@ export default function InvoicePreview({ invoiceData }) {
                         {/* Summary Box */}
                         <tr>
                             <td colSpan="3" rowSpan="2" style={{ ...styles.tdLeft, verticalAlign: 'middle', padding: '12px 10px', backgroundColor: '#ffffff' }}>
-                                <div style={{ fontSize: '11px' }}>
+                                <div style={{ fontSize: '13px' }}>
                                     <span style={{ fontWeight: '800' }}>Amount In Words:</span>{' '}
                                     <span style={{ color: ink }}>{numberToWords(Math.round(total))} Rupees Only</span>
                                 </div>
@@ -420,10 +565,10 @@ export default function InvoicePreview({ invoiceData }) {
                         <div>IFSC: {invoiceData.ifsc}</div>
                     </div>
                     <div style={styles.signatureBox}>
-                        <div style={{ fontSize: '10px', color: muted }}>Client Signature</div>
+                        <div style={{ fontSize: '13px', color: muted }}>Client Signature</div>
                         <div style={styles.signatureSpace}></div>
                         <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '6px', fontSize: '11px', fontWeight: '700' }}>
-                            For {invoiceData.companyName}
+                            <span style={{fontSize: '13px'}}>For {invoiceData.companyName}</span>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import DateField from './DateField'
 
-export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, onSave, saving, saveStatus }) {
+export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPreview, onSave, saving, saveStatus }) {
     const handleInputChange = (field, value) => {
         setInvoiceData(prev => ({ ...prev, [field]: value }))
     }
@@ -198,6 +198,43 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, onPreview, on
                 {/* Client Details */}
                 <div className="border-b pb-3 md:pb-4">
                     <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-2 md:mb-3">Bill To</h2>
+
+                      {/* Select Saved Client */}
+    <div className="mb-3">
+        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+            Select Client
+        </label>
+
+        <select
+            value=""
+            onChange={(e) => {
+                const selectedClient = clients.find(
+                    (client) => String(client.id) === e.target.value
+                )
+
+                if (selectedClient) {
+                    setInvoiceData(prev => ({
+                        ...prev,
+                        clientName: selectedClient.client_name || '',
+                        clientGSTIN: selectedClient.client_gstin || '',
+                        clientPhone: selectedClient.client_phone || '',
+                        clientAddress: selectedClient.client_address || ''
+                    }))
+                }
+            }}
+            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+            <option value="">-- Select a Client --</option>
+
+            {clients?.map((client) => (
+                <option key={client.id} value={client.id}>
+                    {client.client_name}
+                </option>
+            ))}
+        </select>
+    </div>
+
+    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                         <div>
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Client Name *</label>

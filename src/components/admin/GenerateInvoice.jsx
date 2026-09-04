@@ -48,12 +48,16 @@ export default function GenerateInvoice({ onSaved }) {
   const [showPreview, setShowPreview] = useState(false)
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' })
   const [saving, setSaving] = useState(false)
+  const [clients, setClients] = useState([])
 
   useEffect(() => {
     Promise.all([
       api('/api/settings').catch(() => null),
       api('/api/invoices/next-number').catch(() => null),
-    ]).then(([settings, num]) => {
+      api('/api/clients').catch(() => []),
+    ]).then(([settings, num, clientList]) => {
+      console.log('CLIENTS FROM API:', clientList)
+      setClients(clientList || [])
       setInvoiceData((prev) => ({
         ...prev,
         ...(settings || {}),
@@ -102,10 +106,12 @@ export default function GenerateInvoice({ onSaved }) {
       <InvoiceForm
         invoiceData={invoiceData}
         setInvoiceData={setInvoiceData}
+        clients={clients}
         onPreview={() => setShowPreview(true)}
         onSave={saveInvoice}
         saving={saving}
         saveStatus={saveStatus}
+
       />
     </div>
   )
