@@ -14,6 +14,12 @@ const isInterState = (companyGstin, clientGstin) => {
   return Boolean(a && b && a !== b)
 }
 
+const resolveTaxType = (data) => {
+  const manual = data.taxType || 'auto'
+  if (manual === 'intra' || manual === 'inter') return manual
+  return isInterState(data.companyGSTIN, data.clientGSTIN) ? 'inter' : 'intra'
+}
+
 export const parseDeliveryCharge = (value) => {
   if (!value) return { money: 0, display: 'No Delivery Charge' }
   const raw = value.toString().trim()
@@ -31,14 +37,14 @@ export const computeTotals = (data) => {
   const pf = includePF ? parseNum(data.pfCharge) : 0
   const delivery = includeDelivery ? parseDeliveryCharge(data.deliveryCharge).money : 0
   const taxableValue = subtotal + pf + delivery
-  const interState = isInterState(data.companyGSTIN, data.clientGSTIN)
+  const taxType = resolveTaxType(data)
 
   let cgst = 0
   let sgst = 0
   let igst = 0
   let igstRate = 0
 
-  if (interState) {
+  if (taxType === 'inter') {
     igstRate = parseNum(data.igstRate) || (parseNum(data.cgstRate) + parseNum(data.sgstRate)) || 0
     igst = taxableValue * (igstRate / 100)
   } else {
@@ -56,6 +62,7 @@ export const computeTotals = (data) => {
     sgst: round2(sgst),
     igst: round2(igst),
     igstRate,
+    taxType,
     total: Math.round(total),
   }
 }
@@ -97,6 +104,7 @@ const mapDbToApi = (row) => ({
   sgstAmount: row.sgst_amount,
   igstRate: row.igst_rate != null ? String(row.igst_rate) : '',
   igstAmount: row.igst_amount || 0,
+  taxType: row.tax_type || 'auto',
   total: row.total,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -148,6 +156,7 @@ export const toDbParams = (data) => {
     t.sgst,
     t.igst,
     t.igstRate,
+    t.taxType,
     t.total,
   ]
 }

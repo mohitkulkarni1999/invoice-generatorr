@@ -105,6 +105,9 @@ const setup = async () => {
   await query(`
     ALTER TABLE invoices ADD COLUMN IF NOT EXISTS igst_rate NUMERIC(5,2) NOT NULL DEFAULT 0
   `)
+  await query(`
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_type VARCHAR(10) NOT NULL DEFAULT 'auto'
+  `)
 
   console.log('✓ Database schema ready')
 }

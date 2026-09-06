@@ -1,5 +1,5 @@
 import DateField from './DateField'
-import { isInterState, defaultIGSTRate } from '../utils/gst'
+import { resolveTaxType, defaultIGSTRate } from '../utils/gst'
 
 export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPreview, onSave, saving, saveStatus }) {
     const handleInputChange = (field, value) => {
@@ -67,11 +67,13 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPr
         return getTaxableValue() * (parseFloat(invoiceData.sgstRate) || 0) / 100
     }
 
-    const interState = isInterState(invoiceData.companyGSTIN, invoiceData.clientGSTIN)
+    const taxType = resolveTaxType(invoiceData.companyGSTIN, invoiceData.clientGSTIN, invoiceData.taxType)
+    const interState = taxType === 'inter'
 
+    const computedIgstRate = defaultIGSTRate(invoiceData.cgstRate, invoiceData.sgstRate)
     const igstRate = invoiceData.igstRate
         ? parseFloat(invoiceData.igstRate)
-        : defaultIGSTRate(invoiceData.cgstRate, invoiceData.sgstRate)
+        : computedIgstRate
 
     const calculateIGST = () => {
         return interState ? getTaxableValue() * igstRate / 100 : 0
@@ -388,48 +390,63 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPr
                             Client is in a different state (inter-state) — IGST {igstRate}% will be applied.
                         </p>
                     )}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-3 mb-3">
+                        <div className="md:col-span-2">
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">GST Type</label>
+                            <select
+                                value={invoiceData.taxType || 'auto'}
+                                onChange={(e) => handleInputChange('taxType', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            >
+                                <option value="auto">Auto (detect from GSTIN)</option>
+                                <option value="intra">CGST + SGST (Same State)</option>
+                                <option value="inter">IGST (Different State)</option>
+                            </select>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-                        {!interState ? (
-                            <>
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">CGST (%)</label>
-                                    <input
-                                        type="number"
-                                        value={invoiceData.cgstRate}
-                                        onChange={(e) => handleInputChange('cgstRate', e.target.value)}
-                                        className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        min="0"
-                                        max="100"
-                                        step="0.01"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">SGST (%)</label>
-                                    <input
-                                        type="number"
-                                        value={invoiceData.sgstRate}
-                                        onChange={(e) => handleInputChange('sgstRate', e.target.value)}
-                                        className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        min="0"
-                                        max="100"
-                                        step="0.01"
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">IGST (%)</label>
-                                <input
-                                    type="number"
-                                    value={igstRate}
-                                    onChange={(e) => handleInputChange('igstRate', e.target.value)}
-                                    className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                />
-                            </div>
-                        )}
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">CGST (%)</label>
+                            <input
+                                type="number"
+                                value={invoiceData.cgstRate}
+                                onChange={(e) => {
+                                    handleInputChange('cgstRate', e.target.value)
+                                    if (!invoiceData.igstRate) handleInputChange('igstRate', defaultIGSTRate(e.target.value, invoiceData.sgstRate))
+                                }}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">SGST (%)</label>
+                            <input
+                                type="number"
+                                value={invoiceData.sgstRate}
+                                onChange={(e) => {
+                                    handleInputChange('sgstRate', e.target.value)
+                                    if (!invoiceData.igstRate) handleInputChange('igstRate', defaultIGSTRate(invoiceData.cgstRate, e.target.value))
+                                }}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">IGST (%)</label>
+                            <input
+                                type="number"
+                                value={igstRate}
+                                onChange={(e) => handleInputChange('igstRate', e.target.value)}
+                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                            />
+                        </div>
                         <div>
                             <label className="flex items-center justify-between text-xs md:text-sm font-medium text-gray-700 mb-1">
                                 P&F Charge

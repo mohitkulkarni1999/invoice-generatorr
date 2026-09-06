@@ -36,6 +36,7 @@ const initialData = {
   cgstRate: 9,
   sgstRate: 9,
   igstRate: 18,
+  taxType: 'auto',
   pfCharge: '100',
   deliveryCharge: '250',
   includePF: true,

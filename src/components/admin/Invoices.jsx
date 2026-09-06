@@ -271,8 +271,8 @@ export default function Invoices({ refreshKey }) {
               <div className="flex justify-end">
                 <div className="space-y-1 text-xs w-full sm:w-56">
                   <div className="flex justify-between"><span className="text-gray-500">Subtotal:</span><span className="font-semibold">{formatINR(selected.subtotal)}</span></div>
-                  {(selected.igstAmount > 0) ? (
-                    <div className="flex justify-between"><span className="text-gray-500">IGST ({selected.igstRate || 18}%):</span><span className="font-semibold">{formatINR(selected.igstAmount)}</span></div>
+                  {(selected.taxType === 'inter') || (selected.igstAmount > 0) ? (
+                    <div className="flex justify-between"><span className="text-gray-500">IGST ({selected.igstRate || (Number(selected.cgstRate) + Number(selected.sgstRate)) || 18}%):</span><span className="font-semibold">{formatINR(selected.igstAmount)}</span></div>
                   ) : (
                     <>
                       <div className="flex justify-between"><span className="text-gray-500">CGST ({selected.cgstRate}%):</span><span className="font-semibold">{formatINR(selected.cgstAmount)}</span></div>

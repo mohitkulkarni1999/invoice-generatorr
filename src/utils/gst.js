@@ -14,3 +14,9 @@ export const defaultIGSTRate = (cgstRate, sgstRate) => {
   const s = parseFloat(sgstRate) || 0
   return c + s
 }
+
+// taxType: 'auto' (detect from GSTIN) | 'intra' (CGST+SGST) | 'inter' (IGST)
+export const resolveTaxType = (companyGstin, clientGstin, taxType = 'auto') => {
+  if (taxType === 'intra' || taxType === 'inter') return taxType
+  return isInterState(companyGstin, clientGstin) ? 'inter' : 'intra'
+}

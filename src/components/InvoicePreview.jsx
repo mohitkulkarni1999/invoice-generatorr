@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { isInterState, defaultIGSTRate } from '../utils/gst'
+import { resolveTaxType, defaultIGSTRate } from '../utils/gst'
 
 export default function InvoicePreview({ invoiceData }) {
     const invoiceRef = useRef()
@@ -58,7 +58,8 @@ export default function InvoicePreview({ invoiceData }) {
         return invoiceData.items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
     }
 
-    const interState = isInterState(invoiceData.companyGSTIN, invoiceData.clientGSTIN)
+    const taxType = resolveTaxType(invoiceData.companyGSTIN, invoiceData.clientGSTIN, invoiceData.taxType)
+    const interState = taxType === 'inter'
 
     const igstRate = invoiceData.igstRate
         ? parseFloat(invoiceData.igstRate)
