@@ -10,6 +10,7 @@ import settingsRoutes from './routes/settings.js'
 import statsRoutes from './routes/stats.js'
 import { requireAuth } from './middleware/auth.js'
 import clientsRouter from './routes/clients.js';
+import { query } from './db/index.js'
 
 dotenv.config()
 
@@ -25,6 +26,16 @@ app.use(express.json({ limit: '2mb' }))
 // API health check
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'invoice-generator-backend', time: new Date().toISOString() })
+})
+
+// Keep-alive: runs a real DB query so Supabase free tier never auto-pauses (cron hits it daily)
+app.get('/api/keep-alive', async (req, res) => {
+  try {
+    await query('SELECT 1')
+    res.status(200).end()
+  } catch (err) {
+    res.status(503).end()
+  }
 })
 
 // Routes
