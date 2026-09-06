@@ -1,4 +1,5 @@
 import DateField from './DateField'
+import { isInterState, defaultIGSTRate } from '../utils/gst'
 
 export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPreview, onSave, saving, saveStatus }) {
     const handleInputChange = (field, value) => {
@@ -66,7 +67,20 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPr
         return getTaxableValue() * (parseFloat(invoiceData.sgstRate) || 0) / 100
     }
 
+    const interState = isInterState(invoiceData.companyGSTIN, invoiceData.clientGSTIN)
+
+    const igstRate = invoiceData.igstRate
+        ? parseFloat(invoiceData.igstRate)
+        : defaultIGSTRate(invoiceData.cgstRate, invoiceData.sgstRate)
+
+    const calculateIGST = () => {
+        return interState ? getTaxableValue() * igstRate / 100 : 0
+    }
+
     const calculateTotal = () => {
+        if (interState) {
+            return getTaxableValue() + calculateIGST();
+        }
         return getTaxableValue() + calculateCGST() + calculateSGST();
     }
 
@@ -369,31 +383,53 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPr
                 {/* GST Settings */}
                 <div className="border-b pb-3 md:pb-4">
                     <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-2 md:mb-3">GST Settings</h2>
+                    {interState && (
+                        <p className="mb-3 text-xs md:text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+                            Client is in a different state (inter-state) — IGST {igstRate}% will be applied.
+                        </p>
+                    )}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">CGST (%)</label>
-                            <input
-                                type="number"
-                                value={invoiceData.cgstRate}
-                                onChange={(e) => handleInputChange('cgstRate', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">SGST (%)</label>
-                            <input
-                                type="number"
-                                value={invoiceData.sgstRate}
-                                onChange={(e) => handleInputChange('sgstRate', e.target.value)}
-                                className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                            />
-                        </div>
+                        {!interState ? (
+                            <>
+                                <div>
+                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">CGST (%)</label>
+                                    <input
+                                        type="number"
+                                        value={invoiceData.cgstRate}
+                                        onChange={(e) => handleInputChange('cgstRate', e.target.value)}
+                                        className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">SGST (%)</label>
+                                    <input
+                                        type="number"
+                                        value={invoiceData.sgstRate}
+                                        onChange={(e) => handleInputChange('sgstRate', e.target.value)}
+                                        className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div>
+                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">IGST (%)</label>
+                                <input
+                                    type="number"
+                                    value={igstRate}
+                                    onChange={(e) => handleInputChange('igstRate', e.target.value)}
+                                    className="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label className="flex items-center justify-between text-xs md:text-sm font-medium text-gray-700 mb-1">
                                 P&F Charge
@@ -516,14 +552,23 @@ export default function InvoiceForm({ invoiceData, setInvoiceData, clients, onPr
                             <span className="text-xs md:text-sm text-gray-700">Delivery Charge:</span>
                             <span className="text-sm md:text-base font-semibold text-gray-800">{renderDeliveryCharge()}</span>
                         </div>
-                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
-                            <span className="text-xs md:text-sm text-gray-700">CGST ({invoiceData.cgstRate}%):</span>
-                            <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateCGST())}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
-                            <span className="text-xs md:text-sm text-gray-700">SGST ({invoiceData.sgstRate}%):</span>
-                            <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateSGST())}</span>
-                        </div>
+                        {!interState ? (
+                            <>
+                                <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
+                                    <span className="text-xs md:text-sm text-gray-700">CGST ({invoiceData.cgstRate}%):</span>
+                                    <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateCGST())}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
+                                    <span className="text-xs md:text-sm text-gray-700">SGST ({invoiceData.sgstRate}%):</span>
+                                    <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateSGST())}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-between items-center pb-1.5 border-b border-blue-200">
+                                <span className="text-xs md:text-sm text-gray-700">IGST ({igstRate}%):</span>
+                                <span className="text-sm md:text-base font-semibold text-gray-800">{formatCurrency(calculateIGST())}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between items-center pt-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                             <span className="text-sm md:text-base font-bold text-gray-800">Total Amount:</span>
                             <span className="text-lg md:text-xl font-bold text-blue-600">{formatCurrency(Math.round(calculateTotal()))}</span>

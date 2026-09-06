@@ -3,6 +3,17 @@ const parseNum = (value) => {
   return isNaN(n) ? 0 : n
 }
 
+const gstStateCode = (gstin = '') => {
+  const s = String(gstin || '').trim().replace(/\s+/g, '')
+  return /^\d{2}/.test(s) ? s.slice(0, 2) : ''
+}
+
+const isInterState = (companyGstin, clientGstin) => {
+  const a = gstStateCode(companyGstin)
+  const b = gstStateCode(clientGstin)
+  return Boolean(a && b && a !== b)
+}
+
 export const parseDeliveryCharge = (value) => {
   if (!value) return { money: 0, display: 'No Delivery Charge' }
   const raw = value.toString().trim()
@@ -20,9 +31,21 @@ export const computeTotals = (data) => {
   const pf = includePF ? parseNum(data.pfCharge) : 0
   const delivery = includeDelivery ? parseDeliveryCharge(data.deliveryCharge).money : 0
   const taxableValue = subtotal + pf + delivery
-  const cgst = taxableValue * (parseNum(data.cgstRate) / 100)
-  const sgst = taxableValue * (parseNum(data.sgstRate) / 100)
-  const total = taxableValue + cgst + sgst
+  const interState = isInterState(data.companyGSTIN, data.clientGSTIN)
+
+  let cgst = 0
+  let sgst = 0
+  let igst = 0
+  let igstRate = 0
+
+  if (interState) {
+    igstRate = parseNum(data.igstRate) || (parseNum(data.cgstRate) + parseNum(data.sgstRate)) || 0
+    igst = taxableValue * (igstRate / 100)
+  } else {
+    cgst = taxableValue * (parseNum(data.cgstRate) / 100)
+    sgst = taxableValue * (parseNum(data.sgstRate) / 100)
+  }
+  const total = taxableValue + cgst + sgst + igst
 
   return {
     subtotal: round2(subtotal),
@@ -31,6 +54,8 @@ export const computeTotals = (data) => {
     taxableValue: round2(taxableValue),
     cgst: round2(cgst),
     sgst: round2(sgst),
+    igst: round2(igst),
+    igstRate,
     total: Math.round(total),
   }
 }
@@ -70,6 +95,8 @@ const mapDbToApi = (row) => ({
   taxableValue: row.taxable_value,
   cgstAmount: row.cgst_amount,
   sgstAmount: row.sgst_amount,
+  igstRate: row.igst_rate != null ? String(row.igst_rate) : '',
+  igstAmount: row.igst_amount || 0,
   total: row.total,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -119,6 +146,8 @@ export const toDbParams = (data) => {
     t.taxableValue,
     t.cgst,
     t.sgst,
+    t.igst,
+    t.igstRate,
     t.total,
   ]
 }

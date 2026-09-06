@@ -9,7 +9,7 @@ const INSERT_COLS = `invoice_number, invoice_date, due_date,
   bank_name, account_no, account_name, account_type, ifsc,
   client_name, client_phone, client_address, client_gstin,
   items, cgst_rate, sgst_rate, pf_charge, delivery_charge, include_pf, include_delivery, notes, terms,
-  subtotal, taxable_value, cgst_amount, sgst_amount, total`
+  subtotal, taxable_value, cgst_amount, sgst_amount, igst_amount, igst_rate, total`
 
 router.get('/', async (req, res) => {
   try {
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
 
     const p = toDbParams(data)
     const { rows } = await query(
-      `INSERT INTO invoices (${INSERT_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) RETURNING *`,
+      `INSERT INTO invoices (${INSERT_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) RETURNING *`,
       p
     )
     res.status(201).json(mapDbToApi(rows[0]))
@@ -107,9 +107,9 @@ router.put('/:id', async (req, res) => {
         bank_name=$10, account_no=$11, account_name=$12, account_type=$13, ifsc=$14,
         client_name=$15, client_phone=$16, client_address=$17, client_gstin=$18,
         items=$19, cgst_rate=$20, sgst_rate=$21, pf_charge=$22, delivery_charge=$23, include_pf=$24, include_delivery=$25, notes=$26, terms=$27,
-        subtotal=$28, taxable_value=$29, cgst_amount=$30, sgst_amount=$31, total=$32,
+        subtotal=$28, taxable_value=$29, cgst_amount=$30, sgst_amount=$31, igst_amount=$32, igst_rate=$33, total=$34,
         updated_at=NOW()
-      WHERE id=$33 RETURNING *`,
+      WHERE id=$35 RETURNING *`,
       [...p, req.params.id]
     )
     res.json(mapDbToApi(rows[0]))

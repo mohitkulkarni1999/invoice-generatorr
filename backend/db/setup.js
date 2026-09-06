@@ -99,6 +99,12 @@ const setup = async () => {
   await query(`
     ALTER TABLE invoices ADD COLUMN IF NOT EXISTS include_delivery BOOLEAN NOT NULL DEFAULT TRUE
   `)
+  await query(`
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS igst_amount NUMERIC(14,2) NOT NULL DEFAULT 0
+  `)
+  await query(`
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS igst_rate NUMERIC(5,2) NOT NULL DEFAULT 0
+  `)
 
   console.log('✓ Database schema ready')
 }

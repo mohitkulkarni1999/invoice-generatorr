@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import { isInterState, defaultIGSTRate } from '../utils/gst'
 
 export default function InvoicePreview({ invoiceData }) {
     const invoiceRef = useRef()
@@ -57,11 +58,18 @@ export default function InvoicePreview({ invoiceData }) {
         return invoiceData.items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
     }
 
+    const interState = isInterState(invoiceData.companyGSTIN, invoiceData.clientGSTIN)
+
+    const igstRate = invoiceData.igstRate
+        ? parseFloat(invoiceData.igstRate)
+        : defaultIGSTRate(invoiceData.cgstRate, invoiceData.sgstRate)
+
     const calculateGST = () => {
         const taxableValue = getTaxableValue();
         const cgst = taxableValue * (parseFloat(invoiceData.cgstRate) || 0) / 100
         const sgst = taxableValue * (parseFloat(invoiceData.sgstRate) || 0) / 100
-        return { cgst, sgst }
+        const igst = interState ? taxableValue * igstRate / 100 : 0
+        return { cgst, sgst, igst }
     }
 
     const getPFCharge = () => {
@@ -84,7 +92,7 @@ export default function InvoicePreview({ invoiceData }) {
 
     const calculateTotal = () => {
         const gst = calculateGST()
-        return getTaxableValue() + gst.cgst + gst.sgst
+        return getTaxableValue() + gst.cgst + gst.sgst + gst.igst
     }
 
     const formatDate = (dateString) => {
@@ -99,7 +107,7 @@ export default function InvoicePreview({ invoiceData }) {
     const gst = calculateGST()
     const taxableValue = getTaxableValue()
     const total = calculateTotal()
-    const totalGST = gst.cgst + gst.sgst
+    const totalGST = interState ? gst.igst : gst.cgst + gst.sgst
     const rupees = (amount) => `₹ ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(amount) || 0)}`
 
     // const downloadPDF = async () => {
@@ -495,23 +503,33 @@ export default function InvoicePreview({ invoiceData }) {
                             <td style={styles.tdRight}>{rupees(taxableValue)}</td>
                         </tr>
 
-                        {/* SGST */}
-                        <tr>
-                            <td style={styles.tdLeft}>*SGST {invoiceData.sgstRate}%</td>
-                            <td style={styles.td}></td>
-                            <td style={styles.td}></td>
-                            <td style={styles.td}></td>
-                            <td style={styles.tdRight}>{rupees(gst.sgst)}</td>
-                        </tr>
-
-                        {/* CGST */}
-                        <tr>
-                            <td style={styles.tdLeft}>*CGST {invoiceData.cgstRate}%</td>
-                            <td style={styles.td}></td>
-                            <td style={styles.td}></td>
-                            <td style={styles.td}></td>
-                            <td style={styles.tdRight}>{rupees(gst.cgst)}</td>
-                        </tr>
+                        {/* IGST (inter-state) OR SGST + CGST (intra-state) */}
+                        {interState ? (
+                            <tr>
+                                <td style={styles.tdLeft}>*IGST {igstRate}%</td>
+                                <td style={styles.td}></td>
+                                <td style={styles.td}></td>
+                                <td style={styles.td}></td>
+                                <td style={styles.tdRight}>{rupees(gst.igst)}</td>
+                            </tr>
+                        ) : (
+                            <>
+                                <tr>
+                                    <td style={styles.tdLeft}>*SGST {invoiceData.sgstRate}%</td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.tdRight}>{rupees(gst.sgst)}</td>
+                                </tr>
+                                <tr>
+                                    <td style={styles.tdLeft}>*CGST {invoiceData.cgstRate}%</td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.td}></td>
+                                    <td style={styles.tdRight}>{rupees(gst.cgst)}</td>
+                                </tr>
+                            </>
+                        )}
 
                         {/* Total GST */}
                         <tr style={styles.summaryBg}>

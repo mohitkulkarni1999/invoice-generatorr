@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
       SELECT
         COUNT(*)::int AS total_invoices,
         COALESCE(SUM(total), 0) AS total_revenue,
-        COALESCE(SUM(cgst_amount + sgst_amount), 0) AS total_gst,
+        COALESCE(SUM(cgst_amount + sgst_amount + igst_amount), 0) AS total_gst,
         COALESCE(SUM(subtotal), 0) AS total_subtotal,
         COUNT(DISTINCT client_name)::int AS total_clients,
         COUNT(*) FILTER (WHERE invoice_date >= CURRENT_DATE - INTERVAL '30 days')::int AS invoices_last_30_days
