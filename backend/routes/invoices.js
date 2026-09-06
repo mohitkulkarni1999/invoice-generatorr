@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const data = req.body || {}
-    const { rows } = await query('SELECT id FROM invoices WHERE id = $1', [req.params.id])
+    const { rows: existing } = await query('SELECT id FROM invoices WHERE id = $1', [req.params.id])
     if (!existing[0]) return res.status(404).json({ error: 'Invoice not found' })
 
     const p = toDbParams(data)
