@@ -1,4 +1,4 @@
-# Invoice Generator
+
 
 Admin dashboard and invoice generator built with React (Vite), Express, and Postgres (Supabase).
 
