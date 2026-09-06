@@ -73,6 +73,17 @@ const setup = async () => {
   `)
 
   await query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      client_name VARCHAR(255) NOT NULL,
+      client_gstin VARCHAR(50),
+      client_phone VARCHAR(50),
+      client_address TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_invoices_invoice_number ON invoices (invoice_number)
   `)
   await query(`

@@ -9,6 +9,7 @@ import invoiceRoutes from './routes/invoices.js'
 import settingsRoutes from './routes/settings.js'
 import statsRoutes from './routes/stats.js'
 import { requireAuth } from './middleware/auth.js'
+import clientsRouter from './routes/clients.js';
 
 dotenv.config()
 
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/invoices', requireAuth, invoiceRoutes)
 app.use('/api/settings', requireAuth, settingsRoutes)
 app.use('/api/stats', requireAuth, statsRoutes)
+app.use('/api/clients', clientsRouter);
 
 // Frontend app (built React + admin dashboard, copied from Vite `public/`)
 // Only needed when running locally — on Vercel the static files are served directly.

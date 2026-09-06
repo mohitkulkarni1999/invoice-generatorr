@@ -3,12 +3,14 @@ import Overview from './Overview'
 import GenerateInvoice from './GenerateInvoice'
 import Invoices from './Invoices'
 import Settings from './Settings'
+import Clients from './Clients'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: '📊' },
   { id: 'generate', label: 'Generate Invoice', icon: '➕' },
   { id: 'invoices', label: 'Invoices', icon: '🧾' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
+  { id: 'clients', label: 'Clients', icon: '👥' },
 ]
 
 export default function Dashboard({ admin, onLogout }) {
@@ -97,6 +99,7 @@ export default function Dashboard({ admin, onLogout }) {
           {tab === 'generate' && <GenerateInvoice onSaved={refresh} />}
           {tab === 'invoices' && <Invoices refreshKey={refreshKey} />}
           {tab === 'settings' && <Settings />}
+          {tab === 'clients' && <Clients />}
         </main>
       </div>
     </div>
