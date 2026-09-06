@@ -32,7 +32,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/invoices', requireAuth, invoiceRoutes)
 app.use('/api/settings', requireAuth, settingsRoutes)
 app.use('/api/stats', requireAuth, statsRoutes)
-app.use('/api/clients', clientsRouter);
+app.use('/api/clients', requireAuth, clientsRouter);
 
 // Frontend app (built React + admin dashboard, copied from Vite `public/`)
 // Only needed when running locally — on Vercel the static files are served directly.

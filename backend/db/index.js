@@ -13,6 +13,7 @@ if (connectionString) {
   // and rely on the explicit ssl config below instead.
   connectionString = connectionString
     .replace(/([?&])sslmode=[^&]*/i, '$1')
+    .replace(/([?&])supa=[^&]*/i, '$1')
     .replace(/[?&]$/, '')
 }
 
